@@ -10,9 +10,15 @@ Github Organization(s)
 
 ## How to use / Requirements
 
-Ensure Github CLI (gh) is installed.
+1) Knowledge of Terraform and Github Organizations Administration.  (Although,
+this is why you've come to this repo - likely familar with the aformentioned)
 
-Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via BASH or ZSH
+2) BASH shell.  ToDo, write it for compatibility with ZSH.
+
+3) Ensure [Github CLI](https://cli.github.com/) (gh) is installed.
+
+
+Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via shell.
 
 IE:
 
