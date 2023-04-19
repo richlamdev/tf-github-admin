@@ -17,6 +17,7 @@ Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via BASH or ZSH
 IE:
 
 export GITHUB_ORG="<your organization>"
+
 export GITHUB_TOKEN="<your github api token>"
 
 
@@ -31,8 +32,8 @@ importation of present state deployed state.
 Execute ./import-data.sh to view options for data to scrape.
 IE: memberships,teams, team-memberships, repositories, respository options etc.
 
-Data is exported to CSV to the root folder, in preparation for tf-import.sh to
-use for Terraform import.  See following section.
+Data output is exported to CSV and is located at the root folder.  This data
+is used by tf-import.sh for Terraform import.  See following section.
 
 
 ## tf-import.sh
@@ -48,6 +49,10 @@ Monitor the output during execution of this script for potential errors.
 
 After importation is done, check the Terraform state to verify proper
 importation.
-`Terraform state list` followed by `Terraform plan`.  Theoretically, zero (0)
-changes should be applied against the Github Organization in which the data
-imported was imported from.
+
+`Terraform state list` followed by
+
+`Terraform plan`
+
+Theoretically, zero (0) changes should be applied against the Github
+Organization in which the data imported from.
