@@ -48,8 +48,8 @@ def get_members():
 def get_teams():
     print(f"\nGet list of teams from {org}.\n")
 
-    TEAMS_CSV = "teams.csv"
-    with open(TEAMS_CSV, "w") as f:
+    TEAMS_JSON = "teams.json"
+    with open(TEAMS_JSON, "w") as f:
         f.write("name,id,description,privacy,parent_team_id,slug\n")
 
     http = urllib3.PoolManager()
@@ -66,6 +66,7 @@ def get_teams():
     )
     data = json.loads(response.data.decode("utf-8"))
 
+    teams_data = []
     for team in range(len(data)):
         name = data[team]["name"]
         team_id = data[team]["id"]
@@ -78,12 +79,21 @@ def get_teams():
         )
         slug = data[team]["slug"]
 
-        with open(TEAMS_CSV, "a") as f:
-            f.write(
-                f"{name},{team_id},{description},{privacy},{parent_team_id},{slug}\n"
-            )
+        team_data = {
+            "name": name,
+            "id": team_id,
+            "description": description,
+            "privacy": privacy,
+            "parent_team_id": parent_team_id,
+            "slug": slug,
+        }
 
-    print(f"\nList of teams written to {TEAMS_CSV}\n")
+        teams_data.append(team_data)
+
+    with open(TEAMS_JSON, "w") as f:
+        json.dump(teams_data, f)
+
+    print(f"\nList of teams written to {TEAMS_JSON}\n")
 
 
 if __name__ == "__main__":
