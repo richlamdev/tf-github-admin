@@ -2,7 +2,6 @@ import json
 import os
 import urllib3
 import sys
-from pathlib import Path
 
 
 def get_members():
@@ -110,9 +109,7 @@ def get_team_memberships():
     url = f"https://api.github.com/orgs/{org}/teams"
     response = http.request("GET", url, headers=headers)
     teams_json = json.loads(response.data)
-    print(teams_json)
     for team in range(len(teams_json)):
-        print()
         teams.append(
             {
                 "id": teams_json[team]["id"],
@@ -121,23 +118,26 @@ def get_team_memberships():
                 "members": [],
             }
         )
-    # print(teams[0]["id"])
-
     # For each team, get a list of its members and their roles
     for team in teams:
         url = f"https://api.github.com/orgs/{org}/teams/{team['slug']}/members"
-        response = http.request("GET", url)
+        response = http.request("GET", url, headers=headers)
         members_json = json.loads(response.data)
+        # For each member, get their role in the team
         for member in members_json:
             url = f"https://api.github.com/teams/{team['id']}/memberships/{member['login']}"
-            response = http.request("GET", url)
+            response = http.request("GET", url, headers=headers)
             membership_json = json.loads(response.data)
             team_member_role = membership_json["role"]
             team["members"].append(
                 {"username": member["login"], "role": team_member_role}
             )
 
-    return json.dumps(teams)
+    TEAM_MEMBERSHIP_JSON = "team_memberships.json"
+    with open(TEAM_MEMBERSHIP_JSON, "w") as f:
+        json.dump(teams, f)
+
+    print(f"\nList of teams written to {TEAM_MEMBERSHIP_JSON}\n")
 
 
 def github_api_request(endpoint):
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         auth = "Bearer " + apikey
     except KeyError:
         print("GITHUB_TOKEN environment variable not set")
-        print("Please set the Github API via environment variable.")
+        print("Please set Github API via environment variable.")
         print('Eg: export GITHUB_TOKEN="ghp_XXXXXXXXX"')
         sys.exit(1)
 
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         org = os.environ["GITHUB_OWNER"]
     except KeyError:
         print("GITHUB_OWNER environment variable not set")
-        print("Please set the Github Organization via environment variable.")
+        print("Please set Github Organization via environment variable.")
         print('Eg: export GITHUB_OWNER="google"')
         sys.exit(1)
 
@@ -184,4 +184,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == "teams":
         get_teams()
     elif sys.argv[1] == "team-membership":
+        get_team_memberships()
+    elif sys.argv[1] == "all":
+        get_members()
+        get_teams()
         get_team_memberships()
