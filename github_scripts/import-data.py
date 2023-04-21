@@ -2,6 +2,7 @@ import json
 import os
 import urllib3
 import sys
+from pathlib import Path
 
 
 def get_members():
@@ -38,11 +39,11 @@ def get_members():
         user_data = {"username": data["user"]["login"], "role": data["role"]}
         users_data.append(user_data)
 
-    members_output = "members.json"
-    with open(members_output, "w") as f:
+    MEMBERS_OUTPUT = "members.json"
+    with open(MEMBERS_OUTPUT, "w") as f:
         json.dump(users_data, f)
 
-    print(f"List of members written to {members_output}\n")
+    print(f"List of members written to {MEMBERS_OUTPUT}\n")
 
 
 def get_teams():
@@ -96,6 +97,64 @@ def get_teams():
     print(f"\nList of teams written to {TEAMS_JSON}\n")
 
 
+def get_team_memberships():
+    http = urllib3.PoolManager()
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Authorization": f"{auth}",
+    }
+    teams = []
+
+    # Get a list of all teams in the organization
+    url = f"https://api.github.com/orgs/{org}/teams"
+    response = http.request("GET", url, headers=headers)
+    teams_json = json.loads(response.data)
+    print(teams_json)
+    for team in range(len(teams_json)):
+        print()
+        teams.append(
+            {
+                "id": teams_json[team]["id"],
+                "name": teams_json[team]["name"],
+                "slug": teams_json[team]["slug"],
+                "members": [],
+            }
+        )
+    # print(teams[0]["id"])
+
+    # For each team, get a list of its members and their roles
+    for team in teams:
+        url = f"https://api.github.com/orgs/{org}/teams/{team['slug']}/members"
+        response = http.request("GET", url)
+        members_json = json.loads(response.data)
+        for member in members_json:
+            url = f"https://api.github.com/teams/{team['id']}/memberships/{member['login']}"
+            response = http.request("GET", url)
+            membership_json = json.loads(response.data)
+            team_member_role = membership_json["role"]
+            team["members"].append(
+                {"username": member["login"], "role": team_member_role}
+            )
+
+    return json.dumps(teams)
+
+
+def github_api_request(endpoint):
+    http = urllib3.PoolManager()
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Authorization": f"{auth}",
+    }
+    response = http.request(
+        "GET",
+        f"https://api.github.com{endpoint}",
+        headers=headers,
+    )
+    return json.loads(response.data.decode("utf-8"))
+
+
 if __name__ == "__main__":
 
     try:
@@ -124,3 +183,5 @@ if __name__ == "__main__":
         get_members()
     elif sys.argv[1] == "teams":
         get_teams()
+    elif sys.argv[1] == "team-membership":
+        get_team_memberships()
