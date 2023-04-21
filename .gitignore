@@ -32,5 +32,6 @@ override.tf.json
 *.txt
 *.csv
 *.log
+*.json
 team_members/
 import_*
