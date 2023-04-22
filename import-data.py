@@ -21,7 +21,7 @@ def get_members():
 
     MEMBERS_OUTPUT = "members.json"
     with open(MEMBERS_OUTPUT, "w") as f:
-        json.dump(users_data, f)
+        json.dump(users_data, f, indent=4)
 
     print(f"List of members written to {MEMBERS_OUTPUT}\n")
 
@@ -60,7 +60,7 @@ def get_teams():
         teams_data.append(team_data)
 
     with open(TEAMS_JSON, "w") as f:
-        json.dump(teams_data, f)
+        json.dump(teams_data, f, indent=4)
 
     print(f"\nList of teams written to {TEAMS_JSON}\n")
 
@@ -97,7 +97,7 @@ def get_team_memberships():
 
     TEAM_MEMBERSHIP_JSON = "team_memberships.json"
     with open(TEAM_MEMBERSHIP_JSON, "w") as f:
-        json.dump(teams, f)
+        json.dump(teams, f, indent=4)
 
     print(f"\nList of teams written to {TEAM_MEMBERSHIP_JSON}\n")
 

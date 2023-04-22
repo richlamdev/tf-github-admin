@@ -2,36 +2,16 @@
 
 
 function import_members() {
+  members_file="members.json"
 
-  INPUT_FILE="members.json"
-  OUTPUT_FILE="import_members.tf"
-  EOF_MARKER="END_OF_FILE_MARKER"
+  # Read members from JSON file
+  members=$(jq -r '.[] | @base64' $members_file)
 
-  echo "Checking if $OUTPUT_FILE exists."
-  if [[ -f $OUTPUT_FILE ]]; then
-    echo "[ Deleting $OUTPUT_FILE ]"
-    echo
-    rm $OUTPUT_FILE
-  fi
-
-  # Loop through each member in the JSON file
-  jq -c '.[]' $INPUT_FILE | while read -r json; do
-    username=$(echo $json | jq -r '.username')
-    role=$(echo $json | jq -r '.role')
-
-    config=$(cat <<-EOF
-resource "github_membership" "$username" {
-  username = "$username"
-  role     = "$role"
-}\n
-EOF
-)
-
-    # Write the Terraform resource to the output file
-    echo -e "$config" >> $OUTPUT_FILE
-
-    # Import the state for the member
-    terraform import github_membership.$username $ORG:$username
+  # Loop through members and import state
+  for member in $members; do
+    decoded_member=$(echo $member | base64 -d)
+    username=$(echo $decoded_member | jq -r '.username')
+    terraform import "github_membership.member[\"${username}\"]" "${ORG}:${username}"
   done
 }
 
