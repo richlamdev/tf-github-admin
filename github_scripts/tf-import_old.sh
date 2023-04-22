@@ -1,11 +1,9 @@
 #!/bin/bash
 
+function members_import {
 
-function import_members() {
-
-  INPUT_FILE="members.json"
+  INPUT_FILE="members.csv"
   OUTPUT_FILE="import_members.tf"
-  EOF_MARKER="END_OF_FILE_MARKER"
 
   echo "Checking if $OUTPUT_FILE exists."
   if [[ -f $OUTPUT_FILE ]]; then
@@ -14,31 +12,22 @@ function import_members() {
     rm $OUTPUT_FILE
   fi
 
-  # Loop through each member in the JSON file
-  jq -c '.[]' $INPUT_FILE | while read -r json; do
-    username=$(echo $json | jq -r '.username')
-    role=$(echo $json | jq -r '.role')
+  tail -n +2 $INPUT_FILE | while IFS=',' read -r username role; do
 
-    config=$(cat <<-EOF
-resource "github_membership" "$username" {
-  username = "$username"
-  role     = "$role"
-}
-EOF
-)
-
-    # Write the Terraform resource to the output file
+    config="resource \"github_membership\" \"$username\" {\n"
+    config+="  username = \"$username\"\n"
+    config+="  role = \"$role\"\n"
+    config+="}\n"
     echo -e "$config" >> $OUTPUT_FILE
 
-    # Import the state for the member
     terraform import github_membership.$username $ORG:$username
+
   done
 }
 
+function teams_import {
 
-function import_teams {
-
-  INPUT_FILE="teams.json"
+  INPUT_FILE="teams.csv"
   OUTPUT_FILE="import_teams.tf"
 
   echo "Checking if $OUTPUT_FILE exists."
@@ -48,30 +37,23 @@ function import_teams {
     rm $OUTPUT_FILE
   fi
 
-  # Read the JSON file and loop over each object
-  jq -c '.[]' $INPUT_FILE | while read -r team; do
-    name=$(echo "$team" | jq -r '.name')
-    id=$(echo "$team" | jq -r '.id')
-    description=$(echo "$team" | jq -r '.description')
-    privacy=$(echo "$team" | jq -r '.privacy')
-    parent_team_id=$(echo "$team" | jq -r '.parent_team_id')
-    slug=$(echo "$team" | jq -r '.slug')
+  # Read the CSV file and loop over each line
+  tail -n +2 $INPUT_FILE | while IFS=',' read -r name id description privacy parent_team_id slug; do
+
+    # Set the slug variable using the name with spaces removed
+    #slug=$(echo "$name" | tr -d '[:space:]')
 
     # Define the variable name using the slug
     var_name="${slug}_name"
 
     # Define the Terraform configuration for the team resource
-    config=$(cat <<-EOF
-resource "github_team" "$slug" {
-  name = var.$var_name
-  description = "$description"
-  create_default_maintainer = true
-  privacy = "$privacy"\n
-EOF
-)
+    config="resource \"github_team\" \"$slug\" {\n"
+    config+="  name = var.$var_name\n"
+    config+="  description = \"$description\"\n"
+    config+="  privacy = \"$privacy\"\n"
 
     # If parent_team_id is specified, add it to the configuration
-    if [ "$parent_team_id" != "null" ]; then
+    if [ -n "$parent_team_id" ]; then
       parent_slug=$(echo "$parent_team_id" | tr -d '[:space:]')
       config+="  parent_team_id = $parent_slug\n"
     fi
@@ -80,12 +62,9 @@ EOF
     config+="}\n"
 
     # Define the variable for the team name
-    var_config=$(cat <<-EOF
-variable "$var_name" {
-  default = "$name"
-}
-EOF
-    )
+    var_config="variable \"$var_name\" {\n"
+    var_config+="  default = \"$name\"\n"
+    var_config+="}\n"
 
     # Append the configuration to $OUTPUT_FILE
     echo -e "$config" >> $OUTPUT_FILE
@@ -135,10 +114,10 @@ function main {
 
   case "$1" in
     members)
-      import_members
+      members_import
       ;;
     teams)
-      import_teams
+      teams_import
       ;;
     team-membership)
       team_membership_import
