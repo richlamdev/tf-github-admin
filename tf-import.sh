@@ -15,68 +15,21 @@ function import_members() {
   done
 }
 
+function import_teams() {
+  teams_file="teams.json"
 
-function import_teams {
+  # Parse the JSON file into an array of objects
+  team_id=$(jq -r '.[].id' $teams_file)
+  team_name=$(jq -r '.[].name' $teams_file)
 
-  INPUT_FILE="teams.json"
-  OUTPUT_FILE="import_teams.tf"
-
-  echo "Checking if $OUTPUT_FILE exists."
-  if [[ -f $OUTPUT_FILE ]]; then
-    echo "[ Deleting $OUTPUT_FILE ]"
-    echo
-    rm $OUTPUT_FILE
-  fi
-
-  # Read the JSON file and loop over each object
-  jq -c '.[]' $INPUT_FILE | while read -r team; do
-    name=$(echo "$team" | jq -r '.name')
-    id=$(echo "$team" | jq -r '.id')
-    description=$(echo "$team" | jq -r '.description')
-    privacy=$(echo "$team" | jq -r '.privacy')
-    parent_team_id=$(echo "$team" | jq -r '.parent_team_id')
-    slug=$(echo "$team" | jq -r '.slug')
-
-    # Define the variable name using the slug
-    var_name="${slug}_name"
-
-    # Define the Terraform configuration for the team resource
-    config=$(cat <<-EOF
-resource "github_team" "$slug" {
-  name = var.$var_name
-  description = $(if [ "$description" != "null" ]; then echo "\"$description\""; else echo "null"; fi)
-  create_default_maintainer = true
-  privacy = "$privacy"\n
-EOF
-)
-
-    # If parent_team_id is specified, add it to the configuration
-    if [ "$parent_team_id" != "null" ]; then
-      parent_slug=$(echo "$parent_team_id" | tr -d '[:space:]')
-      config+="  parent_team_id = $parent_slug\n"
-    else
-      config+="  parent_team_id = null\n"
-    fi
-
-    # Close the configuration block
-    config+="}"
-
-    # Define the variable for the team name
-    var_config=$(cat <<-EOF
-variable "$var_name" {
-  default = "$name"
-}\n
-EOF
-)
-
-    # Append the configuration to $OUTPUT_FILE
-    echo -e "$config" >> $OUTPUT_FILE
-    echo -e "$var_config" >> $OUTPUT_FILE
-
-    terraform import github_team.$slug $id
-
+  # Loop through the teams and import the Terraform state for each one
+  for team in $team_id[@]; do
+    echo $team
+    echo $team_name
+    #terraform import "github_team.teams[\"${team_name}\"]" "${team_id}"
   done
 }
+
 
 
 function import_team_membership {
