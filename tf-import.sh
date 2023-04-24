@@ -7,14 +7,11 @@ function import_members() {
   # Read members from JSON file
   members=$(jq -r '.[] | @base64' $members_file)
 
-  #echo "members: $members"
-  #echo "members_decoded: $members | base64 -d"
-
   # Loop through members and import state
   for member in $members; do
     decoded_member=$(echo $member | base64 -d)
-    echo "decoded_member: $decoded_member"
     username=$(echo $decoded_member | jq -r '.username')
+
     terraform import "github_membership.member[\"${username}\"]" "${ORG}:${username}"
   done
 }
@@ -25,16 +22,14 @@ function import_teams() {
   # Parse the JSON file into an array of objects
   teams=$(jq -r '.[] | @base64' $teams_file)
 
-  #echo "team_id: $teams"
-
   # Loop through the teams and import the Terraform state for each one
   for team in $teams; do
     decoded_team=$(echo $team | base64 -d)
     team_id=$(echo $decoded_team | jq -r '.id')
     team_slug_name=$(echo $decoded_team | jq -r '.slug')
-    echo $team_id
-    echo $team_slug_name
-    terraform import "github_team.teams[\"${team_slug_name}\"]" "${team_id}"
+    team_name=$(echo $decoded_team | jq -r '.name')
+
+    terraform import "github_team.teams[\"${team_name}\"]" "${team_id}"
   done
 }
 
@@ -95,7 +90,7 @@ function main {
     all)
       import_members
       import_teams
-      import_team_membership
+      #import_team_membership
       ;;
     *)
       printf "\n%s" \

@@ -40,11 +40,11 @@ def get_teams():
         name = data[team]["name"]
         team_id = data[team]["id"]
         description = (
-            data[team]["description"] if data[team]["description"] else "null"
+            data[team]["description"] if data[team]["description"] else None
         )
         privacy = data[team]["privacy"]
         parent_team_id = (
-            data[team]["parent"]["id"] if data[team]["parent"] else "null"
+            data[team]["parent"]["id"] if data[team]["parent"] else None
         )
         slug = data[team]["slug"]
 
