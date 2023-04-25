@@ -130,7 +130,7 @@ function main {
     all)
       import_members
       import_teams
-      #import_team_membership
+      import_team_membership
       ;;
     *)
       printf "\n%s" \
