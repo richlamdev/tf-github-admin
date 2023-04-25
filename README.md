@@ -27,18 +27,17 @@ export GITHUB_ORG="<your organization>"
 export GITHUB_TOKEN="<your github api token>"
 
 
-## import-data.sh
+## import-data.py
 
-This script is located in github_scripts/. This is subject (likely) to move to i
-the root folder.
+This script is located at the root of the repo folder.
 
-import-data.sh scrapes from a Github organization to prepare for mass Terraform
+import-data.py scrapes from a Github organization to prepare for mass Terraform
 importation of present state deployed state.
 
-Execute ./import-data.sh to view options for data to scrape.
-IE: memberships,teams, team-memberships, repositories, respository options etc.
+Execute python3 import-data.py to view options for data to scrape.
+IE: members, teams, team-membership, repositories, respository options etc.
 
-Data output is exported to CSV and is located at the root folder.  This data
+Data output is exported to JSON and is located at the root folder.  This data
 is used by tf-import.sh for Terraform import.  See following section.
 
 
@@ -49,7 +48,7 @@ This script is located at the root of the repo folder.
 tf-import.sh sets up the Terraform resources to enable mass importation of state.
 
 Execute ./tf-import.sh to view options for Terraform importation.
-IE: memberships,teams, team-memberships, repositories, respository options etc.
+IE: members, teams, team-membership, repositories, respository options etc.
 
 Monitor the output during execution of this script for potential errors.
 
