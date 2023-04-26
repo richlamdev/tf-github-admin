@@ -2,6 +2,7 @@ import json
 import os
 import urllib3
 import sys
+import pathlib
 
 
 def get_members():
@@ -65,7 +66,7 @@ def get_teams():
     print(f"\nList of teams written to {TEAMS_JSON}\n")
 
 
-def get_team_memberships():
+def get_team_memberships_old():
 
     teams_json = github_api_request(f"/orgs/{org}/teams")
 
@@ -100,6 +101,59 @@ def get_team_memberships():
         json.dump(teams, f, indent=4)
 
     print(f"\nList of teams written to {TEAM_MEMBERSHIP_JSON}\n")
+
+
+def get_team_memberships():
+
+    TEAMS_FOLDER = "team-memberships/"
+
+    print(f'Checking if the folder "{TEAMS_FOLDER}" exists\n')
+    if not pathlib.Path(TEAMS_FOLDER).is_dir():
+        print(f"Creating {TEAMS_FOLDER}")
+        pathlib.Path(TEAMS_FOLDER).mkdir(parents=True, exist_ok=True)
+    else:
+        print(f'Folder "{TEAMS_FOLDER}" already exists\n')
+        print(f"Deleting all files in {TEAMS_FOLDER}\n")
+        for file in pathlib.Path(TEAMS_FOLDER).glob("*"):
+            if file.is_file():
+                file.unlink()
+
+    teams_json = github_api_request(f"/orgs/{org}/teams")
+
+    teams = []
+    for team in range(len(teams_json)):
+        teams.append(
+            {
+                "id": teams_json[team]["id"],
+                "name": teams_json[team]["name"],
+                "slug": teams_json[team]["slug"],
+                "members": [],
+            }
+        )
+
+    team_files = []
+
+    # For each team, get a list of its members and their roles
+    for team in teams:
+        team_files.append(team["slug"] + ".json")
+        members_json = github_api_request(
+            f"/orgs/{org}/teams/{team['slug']}/members"
+        )
+        # For each member, get their role in the team
+        for member in members_json:
+            membership_json = github_api_request(
+                f"/teams/{team['id']}/memberships/{member['login']}"
+            )
+            team_member_role = membership_json["role"]
+            team["members"].append(
+                {"username": member["login"], "role": team_member_role}
+            )
+    # Write team data to individual files
+    for team in range(len(team_files)):
+        with open(f"{TEAMS_FOLDER}{team_files[team]}", "w") as f:
+            json.dump(teams[team], f, indent=4)
+
+    print(f"\nTeam membership information written to {TEAMS_FOLDER}\n")
 
 
 def github_api_request(endpoint):

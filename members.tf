@@ -9,3 +9,6 @@ resource "github_membership" "member" {
   role     = each.value.role
 }
 
+#output "members" {
+  #value = github_membership.member
+#}

@@ -12,3 +12,6 @@ resource "github_team" "teams" {
   create_default_maintainer = true
 }
 
+#output "teams" {
+  #value = github_team.teams
+#}
