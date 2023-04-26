@@ -1,0 +1,18 @@
+[
+    {
+        "username": "ironman",
+        "role": "member"
+    },
+    {
+        "username": "superman",
+        "role": "member"
+    },
+    {
+        "username": "batman",
+        "role": "admin"
+    },
+    {
+        "username": "spiderman",
+        "role": "member"
+    }
+]

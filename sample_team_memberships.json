@@ -1,0 +1,36 @@
+[
+  {
+    "id": 9838381,
+    "name": "team1",
+    "slug": "team1",
+    "members": [
+      {
+        "username": "testuser1",
+        "role": "maintainer"
+      }
+    ]
+  },
+  {
+    "id": 2948811,
+    "name": "team2",
+    "slug": "team2",
+    "members": [
+      {
+        "username": "ironman",
+        "role": "member"
+      },
+      {
+        "username": "superman",
+        "role": "member"
+      },
+      {
+        "username": "batman",
+        "role": "maintainer"
+      },
+      {
+        "username": "spiderman",
+        "role": "member"
+      }
+    ]
+  }
+]

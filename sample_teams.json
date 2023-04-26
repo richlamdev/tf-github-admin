@@ -1,0 +1,26 @@
+[
+  {
+    "name": "team1",
+    "id": 9838381,
+    "description": null,
+    "privacy": "closed",
+    "parent_team_id": 2988811,
+    "slug": "team1"
+  },
+  {
+    "name": "team2",
+    "id": 9281818,
+    "description": null,
+    "privacy": "closed",
+    "parent_team_id": 4444444,
+    "slug": "team2"
+  },
+  {
+    "name": "Developer Team",
+    "id": 5555555,
+    "description": "Developer Team [Learn TF]",
+    "privacy": "closed",
+    "parent_team_id": null,
+    "slug": "developer-team"
+  }
+]

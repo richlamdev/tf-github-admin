@@ -35,3 +35,4 @@ override.tf.json
 *.json
 team_members/
 import_*
+!sample_*
