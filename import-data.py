@@ -200,7 +200,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "teams":
         get_teams()
     elif sys.argv[1] == "team-membership":
-        get_team_memberships()
+        get_team_memberships_old()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
