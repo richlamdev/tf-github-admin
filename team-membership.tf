@@ -1,8 +1,3 @@
-#locals {
-  #team_membership = jsondecode(file("team_memberships.json"))
-#}
-
-
 locals {
   team_members = flatten([
     for team_member in jsondecode(file("team_memberships.json")) :
@@ -18,8 +13,6 @@ locals {
       ]
   ])
 }
-
-
 
 resource "github_team_membership" "team_memberships" {
   for_each = { for member in local.team_members : "${member.team_id}-${member.username}" => member }
