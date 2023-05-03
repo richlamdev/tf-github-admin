@@ -13,39 +13,34 @@ def get_members():
 
     print(f"\nGet all members from {org}.\n")
 
-    http = urllib3.PoolManager()
-
     all_members = []
     page = 1
     max_results = 100
-    url = f"https://api.github.com/orgs/{org}/members"
-    params = {"per_page": max_results, "page": page}
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Authorization": f"{auth}",
-    }
-    response = http.request("GET", url, fields=params, headers=headers)
-    data = json.loads(response.data.decode("utf-8"))
+    query_params = {"per_page": max_results, "page": page}
+
+    data = github_api_request_new(f"/orgs/{org}/members", query_params)
     all_members.extend(data)
 
     # Query all results if there are more than 100 members
     if len(data) == max_results:
         while len(data) == max_results:
             page += 1
-            params = {"per_page": max_results, "page": page}
-            response = http.request("GET", url, fields=params, headers=headers)
-            data = json.loads(response.data.decode("utf-8"))
+            query_params = {"per_page": max_results, "page": page}
+            data = github_api_request_new(f"/orgs/{org}/members", query_params)
             all_members.extend(data)
 
     users_array = [user["login"] for user in all_members]
 
     print("Get organization role for each user.\n")
 
+    page = 1
+
     # Get the role of each user in the organization.
     users_data = []
     for user in users_array:
-        data = github_api_request(f"/orgs/{org}/memberships/{user}")
+        data = github_api_request_new(
+            f"/orgs/{org}/memberships/{user}", query_params
+        )
         user_data = {"username": data["user"]["login"], "role": data["role"]}
         users_data.append(user_data)
 
@@ -64,11 +59,11 @@ def get_teams():
 
     print(f"\nGet list of teams from {org}.\n")
 
-    TEAMS_JSON = "teams.json"
+    page = 1
+    max_results = 100
+    query_params = {"per_page": max_results, "page": page}
 
-    data = github_api_request(f"/orgs/{org}/teams")
-
-    print(len(data))
+    data = github_api_request_new(f"/orgs/{org}/teams", query_params)
 
     teams_data = []
     for team in range(len(data)):
@@ -95,6 +90,7 @@ def get_teams():
 
         teams_data.append(team_data)
 
+    TEAMS_JSON = "teams.json"
     with open(TEAMS_JSON, "w") as f:
         json.dump(teams_data, f, indent=4)
 
@@ -108,7 +104,10 @@ def get_team_memberships_old():
     Does not handle pagination yet.
     """
 
-    teams_json = github_api_request(f"/orgs/{org}/teams")
+    page = 1
+    max_results = 100
+    query_params = {"per_page": max_results, "page": page}
+    teams_json = github_api_request_new(f"/orgs/{org}/teams", query_params)
 
     # schema for the JSON
     teams = []
@@ -124,13 +123,14 @@ def get_team_memberships_old():
 
     # For each team, get a list of its members
     for team in teams:
-        members_json = github_api_request(
-            f"/orgs/{org}/teams/{team['slug']}/members"
+        members_json = github_api_request_new(
+            f"/orgs/{org}/teams/{team['slug']}/members", query_params
         )
         # For each member, get their role in the team
         for member in members_json:
-            membership_json = github_api_request(
-                f"/teams/{team['id']}/memberships/{member['login']}"
+            membership_json = github_api_request_new(
+                f"/teams/{team['id']}/memberships/{member['login']}",
+                query_params,
             )
             team_member_role = membership_json["role"]
             team["members"].append(
@@ -151,6 +151,10 @@ def get_team_memberships():
     Does not handle pagination yet.
     """
 
+    page = 1
+    max_results = 100
+    query_params = {"per_page": max_results, "page": page}
+
     TEAMS_FOLDER = "team-memberships/"
 
     print(f'Checking if the folder "{TEAMS_FOLDER}" exists\n')
@@ -164,7 +168,7 @@ def get_team_memberships():
             if file.is_file():
                 file.unlink()
 
-    teams_json = github_api_request(f"/orgs/{org}/teams")
+    teams_json = github_api_request_new(f"/orgs/{org}/teams", query_params)
 
     # schema for the JSON
     teams = []
@@ -183,13 +187,14 @@ def get_team_memberships():
     # For each team, get a list of its members
     for team in teams:
         team_files.append(team["slug"] + ".json")
-        members_json = github_api_request(
-            f"/orgs/{org}/teams/{team['slug']}/members"
+        members_json = github_api_request_new(
+            f"/orgs/{org}/teams/{team['slug']}/members", query_params
         )
         # For each member, get their role in the team
         for member in members_json:
-            membership_json = github_api_request(
-                f"/teams/{team['id']}/memberships/{member['login']}"
+            membership_json = github_api_request_new(
+                f"/teams/{team['id']}/memberships/{member['login']}",
+                query_params,
             )
             team_member_role = membership_json["role"]
             team["members"].append(
@@ -204,11 +209,9 @@ def get_team_memberships():
     print(f"\nTeam membership information written to {TEAMS_FOLDER}\n")
 
 
-def github_api_request(endpoint):
+def github_api_request_new(endpoint: str, query_params: dict = None) -> list:
     http = urllib3.PoolManager()
-    page = 1
-    max_results = 100
-    params = {"per_page": max_results, "page": page}
+    query_params = query_params if query_params else {}
     headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -217,10 +220,29 @@ def github_api_request(endpoint):
     response = http.request(
         "GET",
         f"https://api.github.com{endpoint}",
-        fields=params,
+        fields=query_params,
         headers=headers,
     )
     return json.loads(response.data.decode("utf-8"))
+
+
+# def github_api_request(endpoint):
+#    http = urllib3.PoolManager()
+#    page = 1
+#    max_results = 100
+#    params = {"per_page": max_results, "page": page}
+#    headers = {
+#        "Accept": "application/vnd.github+json",
+#        "X-GitHub-Api-Version": "2022-11-28",
+#        "Authorization": f"{auth}",
+#    }
+#    response = http.request(
+#        "GET",
+#        f"https://api.github.com{endpoint}",
+#        fields=params,
+#        headers=headers,
+#    )
+#    return json.loads(response.data.decode("utf-8"))
 
 
 if __name__ == "__main__":
