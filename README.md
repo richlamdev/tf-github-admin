@@ -11,11 +11,13 @@ Github Organization(s)
 ## How to use / Requirements
 
 1) Knowledge of Terraform and Github Organizations Administration.  (Although,
-this is why you've come to this repo - likely familar with the aformentioned)
+this is why you've come to this repo!)
 
-2) BASH shell.  ToDo, write it for compatibility with ZSH.
+2) BASH or ZSH shell.
 
-3) Ensure [Github CLI](https://cli.github.com/) (gh) is installed.
+3) Python 3
+
+4) JQ
 
 
 Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via shell.
@@ -61,3 +63,40 @@ importation.
 
 Theoretically, zero (0) changes should be applied against the Github
 Organization in which the data imported from.
+
+
+## Deployment Diagram
+
+
+ ┌──────────────────────────────────┐
+ │                                  │
+ │   Initial Setup/Deployment       │
+ │                                  │
+ │                                  │
+ │   ┌──────────────┐               │                          ┌──────────┐
+ │   │              │               │    ┌─────┐               │          │
+ │   │ Github       │ import-data.py│    │     │ tf-import.sh  │Terraform │
+ │   │ Organization ├───────────────┼───►│JSON ├──────────────►│State     │
+ │   │ (Current     │               │    │Data │               │(local or │
+ │   │  State)      │               │    │     │               │ cloud)   │
+ │   │              │               │    └─────┘               └──────────┘
+ │   └──────────────┘               │       ▲
+ │                                  │       │
+ └──────────────────────────────────┘       │
+                                            │
+                                            │
+                             ┌──────────────┼──────────────────┐
+                             │              │                  │
+                             │              ▼                  │
+                             │     ┌─────────────────────┐     │
+                             │     │ Create / Modify     │     │
+                             │     │ Github Organization │     │
+                             │     │ Settings via Pull   │     │
+                             │     │ Request             │     │
+                             │     └─────────────────────┘     │
+                             │                                 │
+                             │       Ongoing Deployment        │
+                             │                                 │
+                             │                                 │
+                             │                                 │
+                             └─────────────────────────────────┘
