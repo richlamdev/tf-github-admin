@@ -8,7 +8,6 @@ import pathlib
 def get_members() -> None:
     """
     Get a list of members in the organization.
-    Pagination is handled.
     """
 
     print(f"\nGet all members from {org}.\n")
@@ -22,7 +21,7 @@ def get_members() -> None:
     users_data = []
     for user in users_array:
         data = github_api_request(f"/orgs/{org}/memberships/{user}")
-        # json schema
+        # JSON schema
         user_data = {"username": data["user"]["login"], "role": data["role"]}
         users_data.append(user_data)
 
@@ -176,6 +175,10 @@ def get_team_membership_files() -> None:
 
 
 def github_api_request(endpoint: str) -> list:
+    """
+    Make a request to the GitHub API.
+    Handles pagination if there are more than max_results (100).
+    """
     http = urllib3.PoolManager()
 
     all_results = []
@@ -196,6 +199,7 @@ def github_api_request(endpoint: str) -> list:
 
     data = json.loads(response.data.decode("utf-8"))
 
+    # handle paginated results if there are more than max_results
     if len(data) == max_results:
         all_results.extend(data)
         while len(data) == max_results:
