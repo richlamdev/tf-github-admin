@@ -5,7 +5,7 @@ import sys
 import pathlib
 
 
-def get_members():
+def get_members_old():
     """
     Get a list of members in the organization.
     Pagination is handled.
@@ -29,6 +29,8 @@ def get_members():
             data = github_api_request_new(f"/orgs/{org}/members", query_params)
             all_members.extend(data)
 
+    #    all_members = github_api_request("/orgs/{org}/members")
+
     users_array = [user["login"] for user in all_members]
 
     print("Get organization role for each user.\n")
@@ -41,6 +43,59 @@ def get_members():
         data = github_api_request_new(
             f"/orgs/{org}/memberships/{user}", query_params
         )
+        user_data = {"username": data["user"]["login"], "role": data["role"]}
+        users_data.append(user_data)
+
+    MEMBERS_OUTPUT = "members.json"
+    with open(MEMBERS_OUTPUT, "w") as f:
+        json.dump(users_data, f, indent=4)
+
+    print(f"List of members written to {MEMBERS_OUTPUT}\n")
+
+
+def get_members_new():
+    """
+    Get a list of members in the organization.
+    Pagination is handled.
+    """
+
+    print(f"\nGet all members from {org}.\n")
+
+    all_members = []
+    page = 1
+    max_results = 100
+    query_params = {"per_page": max_results, "page": page}
+    #
+    #    data = github_api_request_new(f"/orgs/{org}/members", query_params)
+    #    all_members.extend(data)
+    #
+    #    # Query all results if there are more than 100 members
+    #    if len(data) == max_results:
+    #        while len(data) == max_results:
+    #            page += 1
+    #            query_params = {"per_page": max_results, "page": page}
+    #            data = github_api_request_new(f"/orgs/{org}/members", query_params)
+    #            all_members.extend(data)
+    #
+    all_members = github_api_request(f"/orgs/{org}/members")
+    users_array = [user["login"] for user in all_members]
+
+    print("Get organization role for each user.\n")
+
+    # Get the role of each user in the organization.
+    users_data = []
+    for user in users_array:
+
+        print()
+        print(user)
+        print()
+        data = github_api_request(f"/orgs/{org}/memberships/{user}")
+
+        print(data)
+
+        # data = github_api_request_new(
+        # f"/orgs/{org}/memberships/{user}", query_params
+        # )
         user_data = {"username": data["user"]["login"], "role": data["role"]}
         users_data.append(user_data)
 
@@ -223,26 +278,47 @@ def github_api_request_new(endpoint: str, query_params: dict = None) -> list:
         fields=query_params,
         headers=headers,
     )
+
     return json.loads(response.data.decode("utf-8"))
 
 
-# def github_api_request(endpoint):
-#    http = urllib3.PoolManager()
-#    page = 1
-#    max_results = 100
-#    params = {"per_page": max_results, "page": page}
-#    headers = {
-#        "Accept": "application/vnd.github+json",
-#        "X-GitHub-Api-Version": "2022-11-28",
-#        "Authorization": f"{auth}",
-#    }
-#    response = http.request(
-#        "GET",
-#        f"https://api.github.com{endpoint}",
-#        fields=params,
-#        headers=headers,
-#    )
-#    return json.loads(response.data.decode("utf-8"))
+def github_api_request(endpoint):
+    http = urllib3.PoolManager()
+
+    all_results = []
+    page = 1
+    max_results = 100
+    params = {"per_page": max_results, "page": page}
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Authorization": f"{auth}",
+    }
+    response = http.request(
+        "GET",
+        f"https://api.github.com{endpoint}",
+        fields=params,
+        headers=headers,
+    )
+
+    data = json.loads(response.data.decode("utf-8"))
+    all_results.extend(data)
+
+    if len(data) == max_results:
+        all_results.extend(data)
+        while len(data) == max_results:
+            page += 1
+            params = {"per_page": max_results, "page": page}
+            response = http.request(
+                "GET",
+                f"https://api.github.com{endpoint}",
+                fields=params,
+                headers=headers,
+            )
+            data = json.loads(response.data.decode("utf-8"))
+            all_results.extend(data)
+
+    return all_results
 
 
 if __name__ == "__main__":
@@ -270,7 +346,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if sys.argv[1] == "members":
-        get_members()
+        get_members_new()
     elif sys.argv[1] == "teams":
         get_teams()
     elif sys.argv[1] == "team-membership":

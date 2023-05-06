@@ -21,5 +21,22 @@
         "role": "member"
       }
     ]
-  }
+  },
+  {
+    "id": 2837482,
+    "name": "team3",
+    "slug": "team3",
+    "members": [
+      {
+        "username": "cars",
+        "role": "member"
+      },
+      {
+        "username": "dogs",
+        "role": "member"
+      },
+      {
+        "username": "houses",
+        "role": "maintainer"
+      }
 ]
