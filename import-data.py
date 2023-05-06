@@ -5,7 +5,7 @@ import sys
 import pathlib
 
 
-def get_members():
+def get_members() -> None:
     """
     Get a list of members in the organization.
     Pagination is handled.
@@ -33,7 +33,7 @@ def get_members():
     print(f"List of members written to {MEMBERS_OUTPUT}\n")
 
 
-def get_teams():
+def get_teams() -> None:
     """
     Get a list of teams in the organization.
     """
@@ -74,7 +74,7 @@ def get_teams():
     print(f"\nList of teams written to {TEAMS_JSON}\n")
 
 
-def get_team_membership():
+def get_team_membership() -> None:
     """
     Get a list of teams in the organization and their members and roles.
     Writes to a single JSON file, indicated by TEAMS_MEMBERSHIP_JSON.
@@ -116,18 +116,13 @@ def get_team_membership():
     print(f"\nList of teams written to {TEAM_MEMBERSHIP_JSON}\n")
 
 
-def get_team_membership_files():
+def get_team_membership_files() -> None:
     """
     Get a list of teams in the organization and their members and roles.
     Writes team data to individual JSON files and stored in TEAMS_FOLDER.
-    Does not handle pagination yet.
     """
 
-    page = 1
-    max_results = 100
-    query_params = {"per_page": max_results, "page": page}
-
-    TEAMS_FOLDER = "team-memberships/"
+    TEAMS_FOLDER = "team-membership/"
 
     print(f'Checking if the folder "{TEAMS_FOLDER}" exists\n')
     if not pathlib.Path(TEAMS_FOLDER).is_dir():
@@ -140,7 +135,7 @@ def get_team_membership_files():
             if file.is_file():
                 file.unlink()
 
-    teams_json = github_api_request_new(f"/orgs/{org}/teams", query_params)
+    teams_json = github_api_request(f"/orgs/{org}/teams")
 
     # JSON schema
     teams = []
@@ -159,14 +154,13 @@ def get_team_membership_files():
     # For each team, get a list of its members
     for team in teams:
         team_files.append(team["slug"] + ".json")
-        members_json = github_api_request_new(
-            f"/orgs/{org}/teams/{team['slug']}/members", query_params
+        members_json = github_api_request(
+            f"/orgs/{org}/teams/{team['slug']}/members"
         )
         # For each member, get their role in the team
         for member in members_json:
-            membership_json = github_api_request_new(
-                f"/teams/{team['id']}/memberships/{member['login']}",
-                query_params,
+            membership_json = github_api_request(
+                f"/teams/{team['id']}/memberships/{member['login']}"
             )
             team_member_role = membership_json["role"]
             team["members"].append(
@@ -179,24 +173,6 @@ def get_team_membership_files():
             json.dump(teams[team], f, indent=4)
 
     print(f"\nTeam membership information written to {TEAMS_FOLDER}\n")
-
-
-def github_api_request_new(endpoint: str, query_params: dict = None) -> list:
-    http = urllib3.PoolManager()
-    query_params = query_params if query_params else {}
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Authorization": f"{auth}",
-    }
-    response = http.request(
-        "GET",
-        f"https://api.github.com{endpoint}",
-        fields=query_params,
-        headers=headers,
-    )
-
-    return json.loads(response.data.decode("utf-8"))
 
 
 def github_api_request(endpoint: str) -> list:
