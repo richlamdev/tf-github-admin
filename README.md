@@ -68,35 +68,35 @@ Organization in which the data imported from.
 ## Deployment Diagram
 
 
- ┌──────────────────────────────────┐
- │                                  │
- │   Initial Setup/Deployment       │
- │                                  │
- │                                  │
- │   ┌──────────────┐               │                          ┌──────────┐
- │   │              │               │    ┌─────┐               │          │
- │   │ Github       │ import-data.py│    │     │ tf-import.sh  │Terraform │
- │   │ Organization ├───────────────┼───►│JSON ├──────────────►│State     │
- │   │ (Current     │               │    │Data │               │(local or │
- │   │  State)      │               │    │     │               │ cloud)   │
- │   │              │               │    └─────┘               └──────────┘
- │   └──────────────┘               │       ▲
- │                                  │       │
- └──────────────────────────────────┘       │
-                                            │
-                                            │
-                             ┌──────────────┼──────────────────┐
-                             │              │                  │
-                             │              ▼                  │
-                             │     ┌─────────────────────┐     │
-                             │     │ Create / Modify     │     │
-                             │     │ Github Organization │     │
-                             │     │ Settings via Pull   │     │
-                             │     │ Request             │     │
-                             │     └─────────────────────┘     │
-                             │                                 │
-                             │       Ongoing Deployment        │
-                             │                                 │
-                             │                                 │
-                             │                                 │
-                             └─────────────────────────────────┘
+     ┌──────────────────────────────────┐
+     │                                  │
+     │   Initial Setup/Deployment       │
+     │                                  │
+     │                                  │
+     │   ┌──────────────┐               │                          ┌──────────┐
+     │   │              │               │    ┌─────┐               │          │
+     │   │ Github       │ import-data.py│    │     │ tf-import.sh  │Terraform │
+     │   │ Organization ├───────────────┼───►│JSON ├──────────────►│State     │
+     │   │ (Current     │               │    │Data │               │(local or │
+     │   │  State)      │               │    │     │               │ cloud)   │
+     │   │              │               │    └─────┘               └──────────┘
+     │   └──────────────┘               │       ▲
+     │                                  │       │
+     └──────────────────────────────────┘       │
+                                                │
+                                                │
+                                 ┌──────────────┼──────────────────┐
+                                 │              │                  │
+                                 │              ▼                  │
+                                 │     ┌─────────────────────┐     │
+                                 │     │ Create / Modify     │     │
+                                 │     │ Github Organization │     │
+                                 │     │ Settings via Pull   │     │
+                                 │     │ Request             │     │
+                                 │     └─────────────────────┘     │
+                                 │                                 │
+                                 │       Ongoing Deployment        │
+                                 │                                 │
+                                 │                                 │
+                                 │                                 │
+                                 └─────────────────────────────────┘
