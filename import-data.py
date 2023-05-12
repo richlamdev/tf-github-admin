@@ -205,29 +205,116 @@ def get_repo_info():
     # Send the GET request to the GitHub API and parse the JSON response
     # response = http.request("GET", url, headers=headers)
     # data = json.loads(response.data.decode("utf-8"))
+    # data = github_api_request(f"/orgs/{org}/repos")
     data = github_api_request(f"/orgs/{org}/repos")
 
-    # Loop through each repository and extract the relevant information
-    for repo in data:
-        repo_info = {
-            "name": repo["name"],
-            "description": repo["description"],
-            "homepage_url": repo["homepage"],
-            "private": repo["private"],
-            "has_issues": repo["has_issues"],
-            "has_wiki": repo["has_wiki"],
-            "has_projects": repo["has_projects"],
-            # "allow_merge_commit": repo["allow_merge_commit"],
-            # "allow_squash_merge": repo["allow_squash_merge"],
-            # "allow_rebase_merge": repo["allow_rebase_merge"],
-            # "delete_branch_on_merge": repo["delete_branch_on_merge"],
-            "archived": repo["archived"],
-        }
+    repo_name = []
+    branch_name = []
 
-        # Write the repository information to a JSON file
-        file_name = repo_info["name"] + ".json"
+    for repo in data:
+        file_name = repo["name"] + ".json"
         file_path = f"./repos/{file_name}"
-        write_repo_info_to_file(repo_info, file_path)
+        with open(file_path, "w") as f:
+            json.dump(repo, f, indent=4)
+
+        repo_name.append(repo["name"])
+        branch_name.append(repo["default_branch"])
+
+    for repo, branch in zip(repo_name, branch_name):
+        print(repo)
+        data = github_api_request(
+            f"/repos/{org}/{repo}/branches/{branch}/protection"
+        )
+
+        file_name = f"{repo}-{branch}-protection" + ".json"
+        file_path = f"./repos/{file_name}"
+        with open(file_path, "w") as f:
+            json.dump(data, f, indent=4)
+
+    # write_repo_info_to_file(repo, file_path)
+
+
+#    # Loop through each repository and extract the relevant information
+#    for repo in data:
+#        repo_info = {
+#            "name": repo["name"],
+#            "description": repo["description"],
+#            "homepage_url": repo["homepage"],
+#            "private": repo["private"],
+#            "has_issues": repo["has_issues"],
+#            "has_wiki": repo["has_wiki"],
+#            "has_projects": repo["has_projects"],
+#            # "allow_merge_commit": repo["allow_merge_commit"],
+#            # "allow_squash_merge": repo["allow_squash_merge"],
+#            # "allow_rebase_merge": repo["allow_rebase_merge"],
+#            # "delete_branch_on_merge": repo["delete_branch_on_merge"],
+#            "archived": repo["archived"],
+#        }
+#
+#        # Write the repository information to a JSON file
+#        file_name = repo_info["name"] + ".json"
+#        file_path = f"./repos/{file_name}"
+#        write_repo_info_to_file(repo_info, file_path)
+
+
+def get_collaborators():
+    """
+    Retrieve the collaborators for all repositories belonging to a
+    GitHub organization.
+    Parameters:
+    - org_name: The name of the organization.
+    - token: A GitHub personal access token to authenticate the API requests.
+    Returns:
+    - A dictionary of collaborators, where the keys are repository names and
+    the values are lists of collaborators for each repository.
+    """
+    # http = urllib3.PoolManager()
+    # url = f"https://api.github.com/orgs/{org_name}/repos?type=all"
+    # headers = {
+    # "Authorization": f"token {token}",
+    # "User-Agent": "Python-urllib3",
+    # }
+    # response = http.request("GET", url, headers=headers)
+    repos_json = github_api_request(f"/orgs/{org}/repos")
+    # if response.status != 200:
+    # raise Exception(
+    # f"Failed to retrieve GitHub repositories (HTTP {response.status})"
+    # )
+
+    for repo in repos_json:
+        repo_name = repo["name"]
+        # url = f"https://api.github.com/repos/{org}/{repo_name}/collaborators"
+        # response = http.request("GET", url, headers=headers)
+        response = github_api_request(f"/repos/{org}/{repo_name}/teams")
+        # if response.status != 200:
+        # raise Exception(
+        # f"Failed to retrieve collaborators for {repo_name} (HTTP {response.status})"
+        # )
+        # print(response)
+        # print(repo_name)
+
+        with open(f"./repos/{repo_name}_collaborators.json", "w") as f:
+            json.dump(response, f, indent=4)
+
+    # repos = json.loads(response.data.decode("utf-8"))
+
+
+#    collaborators = {}
+#    for repo in repos:
+#        repo_name = repo["name"]
+#        # url = f"https://api.github.com/repos/{org}/{repo_name}/collaborators"
+#        # response = http.request("GET", url, headers=headers)
+#        response = github_api_request(
+#            f"/repos/{org}/{repo_name}/collaborators"
+#        )
+#        # if response.status != 200:
+#        # raise Exception(
+#        # f"Failed to retrieve collaborators for {repo_name} (HTTP {response.status})"
+#        # )
+#        collabs = json.loads(response.data.decode("utf-8"))
+#        collab_list = [c["login"] for c in collabs]
+#        collaborators[repo_name] = collab_list
+#    return collaborators
 
 
 def github_api_request(endpoint: str) -> list:
@@ -296,7 +383,9 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Please select an option.")
-        print(f"Usage: {sys.argv[0]} [members|teams|team-membership|all]")
+        print(
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|collab|all]"
+        )
         sys.exit(1)
 
     if sys.argv[1] == "members":
@@ -307,6 +396,8 @@ if __name__ == "__main__":
         get_team_membership()
     elif sys.argv[1] == "repos":
         get_repo_info()
+    elif sys.argv[1] == "collab":
+        get_collaborators()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()

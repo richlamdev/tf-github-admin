@@ -36,3 +36,4 @@ override.tf.json
 team_members/
 import_*
 !sample_*
+tags

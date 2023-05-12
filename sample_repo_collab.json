@@ -1,0 +1,24 @@
+[
+  {
+     "repository": "repo_name"
+     "user": [
+       {
+         "username": "ironman",
+         "permission": "admin"
+       },
+       {
+	 "username": "superman",
+	 "permission": "push"
+       }
+     ],
+     "team": [
+       {
+         "team": "team2"
+         "permission": "maintain"
+       },
+       {
+         "team": "team3"
+	 "permission": "admin"
+       }
+     ]
+]

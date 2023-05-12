@@ -44,6 +44,12 @@ function import_team_membership() {
   done
 }
 
+function test() {
+  terraform init
+  terraform plan
+  terraform apply
+}
+
 
 function main {
 
