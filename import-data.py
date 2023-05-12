@@ -257,64 +257,61 @@ def get_repo_info():
 #        write_repo_info_to_file(repo_info, file_path)
 
 
-def get_collaborators():
+def get_collaborators() -> None:
     """
-    Retrieve the collaborators for all repositories belonging to a
-    GitHub organization.
-    Parameters:
-    - org_name: The name of the organization.
-    - token: A GitHub personal access token to authenticate the API requests.
-    Returns:
-    - A dictionary of collaborators, where the keys are repository names and
-    the values are lists of collaborators for each repository.
+    Retrieve the collaborators for all repos belonging to a GitHub organization
     """
-    # http = urllib3.PoolManager()
-    # url = f"https://api.github.com/orgs/{org_name}/repos?type=all"
-    # headers = {
-    # "Authorization": f"token {token}",
-    # "User-Agent": "Python-urllib3",
-    # }
-    # response = http.request("GET", url, headers=headers)
+    # Obtain the name of each repository
     repos_json = github_api_request(f"/orgs/{org}/repos")
-    # if response.status != 200:
-    # raise Exception(
-    # f"Failed to retrieve GitHub repositories (HTTP {response.status})"
-    # )
+    repo_data = []
 
+    # Loop through each repository
     for repo in repos_json:
         repo_name = repo["name"]
-        # url = f"https://api.github.com/repos/{org}/{repo_name}/collaborators"
-        # response = http.request("GET", url, headers=headers)
-        response = github_api_request(f"/repos/{org}/{repo_name}/teams")
-        # if response.status != 200:
-        # raise Exception(
-        # f"Failed to retrieve collaborators for {repo_name} (HTTP {response.status})"
-        # )
-        # print(response)
-        # print(repo_name)
+        # Obtain the name of each team and permission
+        teams_json = github_api_request(f"/repos/{org}/{repo_name}/teams")
+        if not teams_json:
+            # print(f"No teams found for {repo_name}")
+            team_names = []
+            team_permission = []
+        else:
+            team_names = [team["name"] for team in teams_json]
+            team_permission = [team["permission"] for team in teams_json]
 
-        with open(f"./repos/{repo_name}_collaborators.json", "w") as f:
-            json.dump(response, f, indent=4)
+        # Obtain the name of each member and permission
+        members_json = github_api_request(
+            f"/repos/{org}/{repo_name}/collaborators"
+        )
+        if not members_json:
+            # print(f"No members found for {repo_name}")
+            member_names = []
+            role_name = []
+        else:
+            member_names = [member["login"] for member in members_json]
+            role_name = [member["role_name"] for member in members_json]
 
-    # repos = json.loads(response.data.decode("utf-8"))
+        # JSON schema
+        repo_collaborators = {
+            "repository": repo_name,
+            "team:": [
+                {
+                    "team": team_names,
+                    "permission": team_permission,
+                }
+            ],
+            "user": [
+                {
+                    "usernames": member_names,
+                    "permission": role_name,
+                }
+            ],
+        }
 
+        repo_data.append(repo_collaborators)
 
-#    collaborators = {}
-#    for repo in repos:
-#        repo_name = repo["name"]
-#        # url = f"https://api.github.com/repos/{org}/{repo_name}/collaborators"
-#        # response = http.request("GET", url, headers=headers)
-#        response = github_api_request(
-#            f"/repos/{org}/{repo_name}/collaborators"
-#        )
-#        # if response.status != 200:
-#        # raise Exception(
-#        # f"Failed to retrieve collaborators for {repo_name} (HTTP {response.status})"
-#        # )
-#        collabs = json.loads(response.data.decode("utf-8"))
-#        collab_list = [c["login"] for c in collabs]
-#        collaborators[repo_name] = collab_list
-#    return collaborators
+        print()
+        print(json.dumps(repo_collaborators, indent=4))
+        print()
 
 
 def github_api_request(endpoint: str) -> list:
@@ -384,7 +381,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo_collab|all]"
         )
         sys.exit(1)
 
@@ -396,7 +393,7 @@ if __name__ == "__main__":
         get_team_membership()
     elif sys.argv[1] == "repos":
         get_repo_info()
-    elif sys.argv[1] == "collab":
+    elif sys.argv[1] == "repo_collab":
         get_collaborators()
     elif sys.argv[1] == "all":
         get_members()
