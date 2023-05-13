@@ -1,0 +1,35 @@
+[
+  {
+     "repository": "repo_name"
+     "team:": [
+         {
+             "team": [
+                 "avengers",
+                 "stormtroopers",
+                 "justiceleague"
+             ],
+             "permission": [
+                 "pull",
+                 "pull",
+                 "maintain"
+             ]
+         }
+     ],
+     "user": [
+         {
+             "usernames": [
+                 "spiderman",
+                 "theflash",
+                 "batman",
+                 "greenlantern"
+             ],
+             "permission": [
+                 "read",
+                 "maintain",
+                 "admin",
+                 "read"
+             ]
+         }
+     ]
+  }
+]

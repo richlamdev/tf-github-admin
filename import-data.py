@@ -309,6 +309,10 @@ def get_collaborators() -> None:
 
         repo_data.append(repo_collaborators)
 
+        REPO_COLLABORATORS_JSON = "repo-collaborators.json"
+        with open(REPO_COLLABORATORS_JSON, "w") as f:
+            json.dump(repo_data, f, indent=4)
+
         print()
         print(json.dumps(repo_collaborators, indent=4))
         print()
