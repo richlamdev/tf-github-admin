@@ -37,3 +37,4 @@ team_members/
 import_*
 !json_structure/sample_*
 tags
+temp/
