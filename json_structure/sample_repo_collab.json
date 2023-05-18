@@ -1,35 +1,56 @@
 [
-  {
-     "repository": "repo_name",
-     "team:": [
-         {
-             "team": [
-                 "avengers",
-                 "stormtroopers",
-                 "justiceleague"
-             ],
-             "permission": [
-                 "pull",
-                 "pull",
-                 "maintain"
-             ]
-         }
-     ],
-     "user": [
-         {
-             "usernames": [
-                 "spiderman",
-                 "theflash",
-                 "batman",
-                 "greenlantern"
-             ],
-             "permission": [
-                 "read",
-                 "maintain",
-                 "admin",
-                 "read"
-             ]
-         }
-     ]
-  }
+    {
+        "repository": "demo-repository",
+        "team": [
+            {
+                "team_id": "avengers",
+                "permission": "push"
+            }
+        ],
+        "user": [
+            {
+                "username": "batman",
+                "permission": "admin"
+            },
+            {
+                "username": "superman",
+                "permission": "read"
+            }
+        ]
+    },
+    {
+        "repository": "fake-repository",
+        "team": [
+            {
+                "team_id": "autobots",
+                "permission": "pull"
+            },
+            {
+                "team_id": "decepticons",
+                "permission": "pull"
+            },
+            {
+                "team_id": "justiceleague",
+                "permission": "maintain"
+            }
+        ],
+        "user": [
+            {
+                "username": "greenlantern",
+                "permission": "read"
+            },
+            {
+                "username": "theflash",
+                "permission": "maintain"
+            },
+            {
+                "username": "bumblebee",
+                "permission": "admin"
+            },
+            {
+                "username": "thepunisher",
+                "permission": "read"
+            }
+        ]
+    }
 ]

@@ -272,11 +272,12 @@ def get_collaborators() -> None:
         teams_json = github_api_request(f"/repos/{org}/{repo_name}/teams")
         if not teams_json:
             # print(f"No teams found for {repo_name}")
-            team_names = []
-            team_permission = []
+            team_data = []
         else:
-            team_names = [team["name"] for team in teams_json]
-            team_permission = [team["permission"] for team in teams_json]
+            team_data = [
+                {"team_id": team["name"], "permission": team["permission"]}
+                for team in teams_json
+            ]
 
         # Obtain the name of each member and permission
         members_json = github_api_request(
@@ -284,38 +285,106 @@ def get_collaborators() -> None:
         )
         if not members_json:
             # print(f"No members found for {repo_name}")
-            member_names = []
-            role_name = []
+            user_data = []
         else:
-            member_names = [member["login"] for member in members_json]
-            role_name = [member["role_name"] for member in members_json]
+            # Assuming role_name is equivalent to permission in your GitHub API response
+            user_data = [
+                {
+                    "username": member["login"],
+                    "permission": member["role_name"],
+                }
+                for member in members_json
+            ]
 
         # JSON schema
-        repo_collaborators = {
+        repo_collaborators_json = {
             "repository": repo_name,
-            "team:": [
-                {
-                    "team": team_names,
-                    "permission": team_permission,
-                }
-            ],
-            "user": [
-                {
-                    "usernames": member_names,
-                    "permission": role_name,
-                }
-            ],
+            "team": team_data,
+            "user": user_data,
         }
+        repo_data.append(repo_collaborators_json)
 
-        repo_data.append(repo_collaborators)
+    # Write the repository information to a JSON file
+    REPO_COLLABORATORS_JSON = "repo-collaborators.json"
+    with open(REPO_COLLABORATORS_JSON, "w") as f:
+        json.dump(repo_data, f, indent=4)
 
-        REPO_COLLABORATORS_JSON = "repo-collaborators.json"
-        with open(REPO_COLLABORATORS_JSON, "w") as f:
-            json.dump(repo_data, f, indent=4)
+    print(
+        f"\nList of repo collaborators written to {REPO_COLLABORATORS_JSON}\n"
+    )
 
-        print()
-        print(json.dumps(repo_collaborators, indent=4))
-        print()
+
+# def get_collaborators() -> None:
+#     """
+#     Retrieve the collaborators for all repos belonging to a GitHub organization
+#     """
+#     # Obtain the name of each repository
+#     repos_json = github_api_request(f"/orgs/{org}/repos")
+#     repo_data = []
+
+#     # Loop through each repository
+#     for repo in repos_json:
+#         repo_name = repo["name"]
+#         # Obtain the name of each team and permission
+#         teams_json = github_api_request(f"/repos/{org}/{repo_name}/teams")
+#         if not teams_json:
+#             # print(f"No teams found for {repo_name}")
+#             team_names = []
+#             team_permission = []
+#         else:
+#             team_names = [team["name"] for team in teams_json]
+#             team_permission = [team["permission"] for team in teams_json]
+
+#         # Obtain the name of each member and permission
+#         members_json = github_api_request(
+#             f"/repos/{org}/{repo_name}/collaborators"
+#         )
+#         if not members_json:
+#             # print(f"No members found for {repo_name}")
+#             member_names = []
+#             role_name = []
+#         else:
+#             member_names = [member["login"] for member in members_json]
+#             role_name = [member["role_name"] for member in members_json]
+
+#         repo_collaborators_json = {}
+
+#         # JSON schema
+#         repo_collaborators = {
+#             "repository": repo_name,
+#             "team": team_names,
+#             "team_permission": team_permission,
+#             "usernames": member_names,
+#             "usernames_permission": role_name,
+#         }
+#         # repo_collaborators = {
+#         #     "repository": repo_name,
+#         #     "team:": [
+#         #         {
+#         #             "team": team_names,
+#         #             "permission": team_permission,
+#         #         }
+#         #     ],
+#         #     "user": [
+#         #         {
+#         #             "usernames": member_names,
+#         #             "permission": role_name,
+#         #         }
+#         #     ],
+#         # }
+
+#         repo_data.append(repo_collaborators)
+
+#         REPO_COLLABORATORS_JSON = "repo-collaborators.json"
+#         with open(REPO_COLLABORATORS_JSON, "w") as f:
+#             json.dump(repo_data, f, indent=4)
+
+#         # print()
+#         # print(json.dumps(repo_collaborators, indent=4))
+#         # print()
+#     print(
+#         f"\nList of repo collaborators written to {REPO_COLLABORATORS_JSON}\n"
+#     )
 
 
 def github_api_request(endpoint: str) -> list:

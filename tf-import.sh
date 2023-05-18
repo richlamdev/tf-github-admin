@@ -44,6 +44,29 @@ function import_team_membership() {
   done
 }
 
+function import_github_collaborators() {
+    local json_file="repo-collaborators.json"
+
+    jq -c '.[]' "$json_file" | while read -r repo; do
+        local repo_name=$(echo "$repo" | jq -r '.repository')
+
+        echo "$repo" | jq -c '.user[]' | while read -r user; do
+            local username=$(echo "$user" | jq -r '.username')
+            local resource_id="${repo_name}:${username}"
+            echo "Importing github_repository_collaborators for repository $repo_name and user $username"
+            terraform import "github_repository_collaborators.repo_collaborators[\"$repo_name\"].user[\"$username\"]" "$resource_id"
+        done
+
+        echo "$repo" | jq -c '.team[]' | while read -r team; do
+            local team_id=$(echo "$team" | jq -r '.team_id')
+            local resource_id="${repo_name}:${team_id}"
+            echo "Importing github_repository_collaborators for repository $repo_name and team $team_id"
+            terraform import "github_repository_collaborators.repo_collaborators[\"$repo_name\"].team[\"$team_id\"]" "$resource_id"
+        done
+    done
+}
+
+
 
 function main {
 
@@ -56,6 +79,9 @@ function main {
       ;;
     team-membership)
       import_team_membership
+      ;;
+    repo-collab)
+      import_github_collaborators
       ;;
     all)
       import_members
