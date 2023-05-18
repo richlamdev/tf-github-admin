@@ -1,60 +1,53 @@
 locals {
   json_data = jsondecode(file("repo-collaborators.json"))
 
-  flattened_user_data = flatten([
-    for repo in local.json_data : [
-      for user in repo.user : merge(
-        { "repo_type" = "user" },
-        { "repo_name" = repo.repository },
-        user
-      )]
+  user_data = flatten([
+    for repo in local.json_data: [
+      for user in repo.user: {
+        repository      = repo.repository
+        username        = user.username
+        permission_user = user.permission
+        team_id         = null
+        permission_team = null
+      }
+    ]
   ])
 
-  flattened_team_data = flatten([
-    for repo in local.json_data : [
-      for team in repo.team : merge(
-        { "repo_type" = "team" },
-        { "repo_name" = repo.repository },
-        team
-      )]
+  team_data = flatten([
+    for repo in local.json_data: [
+      for team in repo.team: {
+        repository      = repo.repository
+        username        = null
+        permission_user = null
+        team_id         = team.team_id
+        permission_team = team.permission
+      }
+    ]
   ])
+
+  prepared_data = concat(local.user_data, local.team_data)
 }
 
+resource "github_repository_collaborators" "repo_collaborators" {
+  #for_each = { for item in local.prepared_data : "${item.repository}-${coalesce(item.username, "no_user")}-${coalesce(item.team_id, "no_team")}" => item }
+  for_each = { for item in local.prepared_data : join("-", compact([item.repository, item.username != null ? item.username : "", item.team_id != null ? item.team_id : ""])) => item }
 
 
-resource "github_repository_collaborators" "collaborators" {
-  for_each = {
-    #for item in local.flattened_data : "${item.repo_type}.${item.repo_name}.${item.username != null ? item.username : item.team_id}" => item
-    for item in local.flattened_user_data : "${item.repo_name}-${item.username}" => item
-  }
-
-  repository = each.value.repo_name
+  repository = each.value.repository
 
   dynamic "user" {
-    for_each = each.value.repo_type == "user" ? [each.value] : []
-
+    for_each = each.value.username != null ? [each.value] : []
     content {
       username  = user.value.username
-      permission = user.value.permission
+      permission = user.value.permission_user
     }
   }
-}
-
-
-resource "github_repository_collaborators" "team_collaborators" {
-  for_each = {
-    #for item in local.flattened_data : "${item.repo_type}.${item.repo_name}.${item.username != null ? item.username : item.team_id}" => item
-    for item in local.flattened_team_data : "${item.repo_name}-${item.team_id}" => item
-  }
-
-  repository = each.value.repo_name
 
   dynamic "team" {
-    for_each = each.value.repo_type == "team" ? [each.value] : []
-
+    for_each = each.value.team_id != null ? [each.value] : []
     content {
       team_id    = team.value.team_id
-      permission = team.value.permission
+      permission = team.value.permission_team
     }
   }
 }
