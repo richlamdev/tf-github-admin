@@ -54,14 +54,16 @@ function import_github_collaborators() {
             local username=$(echo "$user" | jq -r '.username')
             local resource_id="${repo_name}:${username}"
             echo "Importing github_repository_collaborators for repository $repo_name and user $username"
-            terraform import "github_repository_collaborators.repo_collaborators[\"$repo_name\"].user[\"$username\"]" "$resource_id"
+            #terraform import "github_repository_collaborators.repo_collaborators[\"$repo_name\"].user[\"$username\"]" "$resource_id"
+            terraform import "github_repository_collaborators.collaborators[\"$repo_name-$username\"]" "$repo_name"
         done
 
         echo "$repo" | jq -c '.team[]' | while read -r team; do
             local team_id=$(echo "$team" | jq -r '.team_id')
             local resource_id="${repo_name}:${team_id}"
             echo "Importing github_repository_collaborators for repository $repo_name and team $team_id"
-            terraform import "github_repository_collaborators.repo_collaborators[\"$repo_name\"].team[\"$team_id\"]" "$resource_id"
+            #terraform import "github_repository_collaborators.repo_collaborators[\"$repo_name\"].team[\"$team_id\"]" "$resource_id"
+            terraform import "github_repository_collaborators.team_collaborators[\"$repo_name-$team_id\"]" "$repo_name"
         done
     done
 }
@@ -94,7 +96,7 @@ function main {
         "Designate Github Organization by environment variable GITHUB_ORG" \
         "Eg. export GITHUB_ORG=\"<organization>\"" \
         "" \
-        "Usage: $0 [members|teams|team-membership|all]" \
+        "Usage: $0 [members|teams|team-membership|repo-collab|all]" \
         "" \
         ""
       exit 1
