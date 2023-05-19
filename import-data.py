@@ -10,14 +10,8 @@ def get_members() -> None:
     Get a list of members in the organization.
     """
 
-    print(f"\nGet all members from {org}.\n")
-
     all_members = github_api_request(f"/orgs/{org}/members")
     users_array = [user["login"] for user in all_members]
-
-    print("Get organization role for each user.\n")
-
-    print(users_array)
 
     # Get the role of each user in the organization.
     users_data = []
@@ -31,15 +25,13 @@ def get_members() -> None:
     with open(MEMBERS_OUTPUT, "w") as f:
         json.dump(users_data, f, indent=4)
 
-    print(f"List of members written to {MEMBERS_OUTPUT}\n")
+    print(f"\nList of members written to {MEMBERS_OUTPUT}\n")
 
 
 def get_teams() -> None:
     """
     Get a list of teams in the organization.
     """
-
-    print(f"\nGet list of teams from {org}.\n")
 
     data = github_api_request(f"/orgs/{org}/teams")
 
@@ -114,7 +106,7 @@ def get_team_membership() -> None:
     with open(TEAM_MEMBERSHIP_JSON, "w") as f:
         json.dump(teams, f, indent=4)
 
-    print(f"\nList of teams written to {TEAM_MEMBERSHIP_JSON}\n")
+    print(f"\nList of team membership written to {TEAM_MEMBERSHIP_JSON}\n")
 
 
 def get_team_membership_files() -> None:
@@ -173,7 +165,7 @@ def get_team_membership_files() -> None:
         with open(f"{TEAMS_FOLDER}{team_files[team]}", "w") as f:
             json.dump(teams[team], f, indent=4)
 
-    print(f"\nTeam membership information written to {TEAMS_FOLDER}\n")
+    print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
 def write_repo_info_to_file(repo_info, file_path):
@@ -288,7 +280,7 @@ def get_collaborators():
                 key=permission_weights.get,
             )
 
-            # Add the collaborator's permissions to the list
+            # JSON schema
             collaborators.append(
                 {
                     "repo": repo["name"],
@@ -302,7 +294,7 @@ def get_collaborators():
         json.dump(collaborators, f, indent=4)
 
     print(
-        f"\nRepo collaborators information written to {COLLABORATORS_JSON}\n"
+        f"\nList of repo collaborators information written to {COLLABORATORS_JSON}\n"
     )
 
 
@@ -391,3 +383,4 @@ if __name__ == "__main__":
         get_members()
         get_teams()
         get_team_membership()
+        get_collaborators()
