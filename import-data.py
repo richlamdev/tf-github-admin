@@ -263,6 +263,14 @@ def get_collaborators():
     repos = github_api_request(f"/orgs/{org}/repos")
 
     collaborators = []
+    # Weights for the permissions
+    permission_weights = {
+        "admin": 5,
+        "maintain": 4,
+        "push": 3,
+        "triage": 2,
+        "pull": 1,
+    }
 
     # Loop through all repos
     for repo in repos:
@@ -273,9 +281,11 @@ def get_collaborators():
 
         # Loop through all collaborators
         for collab in collabs:
-            # Add or update the collaborator's permissions in the dict
-            permission_data = github_api_request(
-                f"/repos/{org}/{repo['name']}/collaborators/{collab['login']}/permission"
+            permissions = collab["permissions"]
+
+            max_permission = max(
+                (perm for perm, has_perm in permissions.items() if has_perm),
+                key=permission_weights.get,
             )
 
             # Add the collaborator's permissions to the list
@@ -283,7 +293,7 @@ def get_collaborators():
                 {
                     "repo": repo["name"],
                     "user": collab["login"],
-                    "permission": permission_data["permission"],
+                    "permission": max_permission,
                 }
             )
 

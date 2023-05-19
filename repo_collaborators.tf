@@ -17,6 +17,6 @@ resource "github_repository_collaborator" "collaborator" {
   repository = each.value.repository
   username   = each.value.username
   permission = each.value.permission
-  permission_diff_suppression = true
+  #permission_diff_suppression = true
 }
 
