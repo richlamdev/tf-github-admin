@@ -259,34 +259,14 @@ def get_repo_info():
 
 # def get_github_data(org_name, personal_access_token):
 def get_collaborators():
-    # http = urllib3.PoolManager()
-
-    # Set headers for the requests
-    # headers = {
-    #     "Accept": "application/vnd.github.v3+json",
-    #     "Authorization": f"token {personal_access_token}",
-    # }
-
-    # # Endpoint to get all repositories in an organization
-    # repos_url = f"https://api.github.com/orgs/{org_name}/repos"
-
-    # response = http.request("GET", repos_url, headers=headers)
-    # repos = json.loads(response.data)
 
     repos = github_api_request(f"/orgs/{org}/repos")
 
-    # Initialize the dictionary that will hold collaborators' data
     collaborators = []
 
     # Loop through all repos
     for repo in repos:
         # Endpoint to get all collaborators in a repo
-        # collab_url = (
-        # f"https://api.github.com/repos/{org}/{repo['name']}/collaborators"
-        # )
-
-        # response = http.request("GET", collab_url, headers=headers)
-        # collabs = json.loads(response.data)
         collabs = github_api_request(
             f"/repos/{org}/{repo['name']}/collaborators"
         )
@@ -296,7 +276,6 @@ def get_collaborators():
             # Add or update the collaborator's permissions in the dict
             permission_data = github_api_request(
                 f"/repos/{org}/{repo['name']}/collaborators/{collab['login']}/permission"
-                # permission_url = f"https://api.github.com/repos/{org_name}/{repo['name']}/collaborators/{collab['login']}/permission"
             )
 
             # Add the collaborator's permissions to the list
@@ -308,23 +287,13 @@ def get_collaborators():
                 }
             )
 
-            # collaborators[collab["login"]] = {
-            #     "repo": repo["name"],
-            #     "permission": permission_data["permission"],
-            # }
-            # collaborators[collab["login"]] = collab["permissions"]
+    COLLABORATORS_JSON = "repo-collaborators.json"
+    with open(COLLABORATORS_JSON, "w") as f:
+        json.dump(collaborators, f, indent=4)
 
-    print(json.dumps(collaborators, indent=4))
-
-    # return collaborators
-
-
-# Call the function with your organization name and personal access token
-# collaborators = get_github_data("your_org_name", "your_personal_access_token")
-
-# Print out the result
-# for user, permissions in collaborators.items():
-# print(f"User: {user}, Permissions: {permissions}")
+    print(
+        f"\nRepo collaborators information written to {COLLABORATORS_JSON}\n"
+    )
 
 
 def github_api_request(endpoint: str) -> list:
