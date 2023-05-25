@@ -298,6 +298,26 @@ def get_collaborators():
     )
 
 
+def get_team_collaborators():
+
+    repos_data = github_api_request(f"/orgs/{org}/repos")
+
+    repositories = []
+    # if repos_response.status == 200:
+    repositories = [repo["full_name"] for repo in repos_data]
+
+    for repo in repositories:
+        owner, repo_name = repo.split("/")
+
+        teams_data = github_api_request(f"/repos/{owner}/{repo_name}/teams")
+        team_names = [team["name"] for team in teams_data]
+        print(f"Repository: {owner}/{repo_name}")
+        print("Teams collaborating on the repository:")
+        for team_name in team_names:
+            print(team_name)
+        print()
+
+
 def github_api_request(endpoint: str) -> list:
     """
     Make a request to the GitHub API.
@@ -320,6 +340,9 @@ def github_api_request(endpoint: str) -> list:
         fields=params,
         headers=headers,
     )
+
+    if response.status != 200:
+        print("Failed to retrieve data:", response.status)
 
     data = json.loads(response.data.decode("utf-8"))
 
@@ -379,6 +402,8 @@ if __name__ == "__main__":
         get_repo_info()
     elif sys.argv[1] == "repo-collab":
         get_collaborators()
+    elif sys.argv[1] == "repo-team-collab":
+        get_team_collaborators()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
