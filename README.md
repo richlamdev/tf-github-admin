@@ -8,6 +8,21 @@ This repo has two scripts to assist with implementing Terraform to manage
 Github Organization(s)
 
 
+## Terraform Resource Management
+
+The goal of this repo is not only to manage Github Organization(s) via
+Terraform, but to manage Terraform resources in a dynamic manner.
+
+Due to the complexity and/or size of Github Organizations, statically creating
+resources is not feasible.
+
+Using JSON data, Terraform utilizes the internal JSON decode function to
+dynamically create resources.  As a result of using JSON data, the creation of
+resources is controlled via a JSON source file as opposed to Terraform resource
+entries.  (which can be many, many resources depending on the scale of the
+platform)  Refer to the Deploy Diagram section.
+
+
 ## How to use / Requirements
 
 1) Knowledge of Terraform and Github Organizations Administration.  (Although,
