@@ -298,7 +298,13 @@ def get_collaborators():
     )
 
 
-def get_team_collaborators():
+def get_all_collaborators():
+
+    teams_with_members = get_organization_teams_with_members()
+    print(json.dumps(teams_with_members, indent=4))
+    print()
+    print(type(teams_with_members["alpha_sub1"]))
+    print()
 
     repos_data = github_api_request(f"/orgs/{org}/repos")
 
@@ -311,11 +317,52 @@ def get_team_collaborators():
 
         teams_data = github_api_request(f"/repos/{owner}/{repo_name}/teams")
         team_names = [team["name"] for team in teams_data]
+
+        members_data = github_api_request(
+            f"/repos/{owner}/{repo_name}/collaborators"
+        )
+        member_names = [member["login"] for member in members_data]
+
         print(f"Repository: {owner}/{repo_name}")
         print("Teams collaborating on the repository:")
         for team_name in team_names:
             print(team_name)
         print()
+        print("Members collaborating on the repository:")
+        for member in member_names:
+            print(member)
+        print()
+        print()
+
+
+def get_organization_teams_with_members():
+    # base_url = "https://api.github.com"
+    # http = urllib3.PoolManager()
+
+    # Set the access token for authenticated requests
+    # headers = {"Authorization": f"Bearer {access_token}"}
+
+    # Get list of teams for the organization
+    # teams_url = f"{base_url}/orgs/{organization_name}/teams"
+    # teams_response = http.request("GET", teams_url, headers=headers)
+    # teams_data = json.loads(teams_response.data.decode("utf-8"))
+    teams_data = github_api_request(f"/orgs/{org}/teams")
+
+    teams_with_members = {}
+
+    # Iterate through each team
+    for team in teams_data:
+        team_name = team["name"]
+        team_members_data = github_api_request(f"/teams/{team['id']}/members")
+
+        # Add team members to the team
+        team_members = []
+        for team_member in team_members_data:
+            team_members.append(team_member["login"])
+
+        teams_with_members[team_name] = team_members
+
+    return teams_with_members
 
 
 def github_api_request(endpoint: str) -> list:
@@ -388,7 +435,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|repo-team-collab|all]"
         )
         sys.exit(1)
 
@@ -403,7 +450,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "repo-collab":
         get_collaborators()
     elif sys.argv[1] == "repo-team-collab":
-        get_team_collaborators()
+        get_all_collaborators()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
