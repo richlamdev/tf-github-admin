@@ -298,19 +298,16 @@ def get_collaborators():
     )
 
 
+import json
+
+
 def get_all_collaborators():
-
-    teams_with_members = get_organization_teams_with_members()
-    print(json.dumps(teams_with_members, indent=4))
-    print()
-    print(type(teams_with_members["alpha_sub1"]))
-    print()
-
+    teams_and_members = get_teams_with_members()
     repos_data = github_api_request(f"/orgs/{org}/repos")
-
-    repositories = []
-    # if repos_response.status == 200:
     repositories = [repo["full_name"] for repo in repos_data]
+
+    individual_collaborators = []  # list to store individual collaborators
+    team_collaborators = []  # list to store team collaborators
 
     for repo in repositories:
         owner, repo_name = repo.split("/")
@@ -326,26 +323,104 @@ def get_all_collaborators():
         print(f"Repository: {owner}/{repo_name}")
         print("Teams collaborating on the repository:")
         for team_name in team_names:
+            team_permission = get_team_permissions(team_name, repo)
+            team_collaborator = {
+                "repository": repo_name,
+                "team": team_name,
+                "permissions": team_permission,
+            }
+            team_collaborators.append(team_collaborator)
             print(team_name)
         print()
         print("Members collaborating on the repository:")
         for member in member_names:
             print(member)
+
+            # Check if member is a team member
+            for team_name, team_members in teams_and_members.items():
+                if member in team_members:
+                    member_permissions = get_member_permissions(member, repo)
+                    team_permissions = get_team_permissions(team_name, repo)
+                    comparison_result = compare_permissions(
+                        member, member_permissions, team_name, team_permissions
+                    )
+
+                    # Add member to the list if they have more privilege
+                    if comparison_result == "member_has_more_privilege":
+                        individual_collaborator = {
+                            "repository": repo_name,  # only store the repository name
+                            "username": member,
+                            "permissions": member_permissions,
+                        }
+                        individual_collaborators.append(
+                            individual_collaborator
+                        )
+                    break
+            else:
+                # Add member to the list if they are not in any team
+                individual_collaborator = {
+                    "repository": repo_name,  # only store the repository name
+                    "username": member,
+                    "permissions": get_member_permissions(member, repo),
+                }
+                individual_collaborators.append(individual_collaborator)
         print()
         print()
 
+    # Save individual_collaborators and team_collaborators to JSON files
+    with open("individual_collaborators.json", "w") as file:
+        json.dump(individual_collaborators, file, indent=4)
 
-def get_organization_teams_with_members():
-    # base_url = "https://api.github.com"
-    # http = urllib3.PoolManager()
+    with open("team_collaborators.json", "w") as file:
+        json.dump(team_collaborators, file, indent=4)
 
-    # Set the access token for authenticated requests
-    # headers = {"Authorization": f"Bearer {access_token}"}
+    return (
+        individual_collaborators,
+        team_collaborators,
+    )  # return the list of individual and team collaborators
 
-    # Get list of teams for the organization
-    # teams_url = f"{base_url}/orgs/{organization_name}/teams"
-    # teams_response = http.request("GET", teams_url, headers=headers)
-    # teams_data = json.loads(teams_response.data.decode("utf-8"))
+
+def get_member_permissions(member, repo):
+    permissions_data = github_api_request(
+        f"/repos/{repo}/collaborators/{member}/permission"
+    )
+    return permissions_data["permission"]
+
+
+def get_team_permissions(team_name, repo):
+    teams_data = github_api_request(f"/repos/{repo}/teams")
+    for team in teams_data:
+        if team["name"] == team_name:
+            return team["permission"]
+    return None
+
+
+def compare_permissions(
+    member, member_permissions, team_name, team_permissions
+):
+    if member_permissions is None or team_permissions is None:
+        return
+
+    print(f"Comparing permissions for {member} in team {team_name}")
+    print(f"Member permissions: {member_permissions}")
+    print(f"Team permissions: {team_permissions}")
+
+    if member_permissions == team_permissions:
+        print("Member and team have the same level of permission.")
+    elif member_permissions == "admin":
+        print("Member has greater privilege than the team.")
+        return "member_has_more_privilege"  # Return a string when member has more privilege
+    elif team_permissions == "admin":
+        print("Team has greater privilege than the member.")
+    else:
+        print(
+            "Member and team have different levels of permission, but neither has greater privilege."
+        )
+    print()
+
+
+def get_teams_with_members():
+
     teams_data = github_api_request(f"/orgs/{org}/teams")
 
     teams_with_members = {}
