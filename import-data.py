@@ -298,13 +298,13 @@ def get_collaborators():
     )
 
 
-import json
-
-
 def get_all_collaborators():
     teams_and_members = get_teams_with_members()
     repos_data = github_api_request(f"/orgs/{org}/repos")
-    repositories = [repo["full_name"] for repo in repos_data]
+    # repositories = [repo["full_name"] for repo in repos_data]
+    repositories = [
+        repo["full_name"] for repo in repos_data if not repo["archived"]
+    ]  # only include non-archived repositories
 
     individual_collaborators = []  # list to store individual collaborators
     team_collaborators = []  # list to store team collaborators
