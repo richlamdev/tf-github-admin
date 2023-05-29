@@ -298,6 +298,127 @@ def get_collaborators():
     )
 
 
+# Define a dictionary to store permissions
+permissions_priority = {
+    "read": 1,
+    "write": 2,
+    "admin": 3,
+}
+
+
+def get_all_collaborators():
+    teams_and_members = get_teams_with_members()
+    repos_data = github_api_request(f"/orgs/{org}/repos")
+    repositories = [
+        repo["full_name"] for repo in repos_data if not repo["archived"]
+    ]
+
+    # Use a dictionary to store individual collaborators and their highest permission
+    individual_collaborators = {}
+
+    for repo in repositories:
+        owner, repo_name = repo.split("/")
+
+        members_data = github_api_request(
+            f"/repos/{owner}/{repo_name}/collaborators"
+        )
+        member_names = [member["login"] for member in members_data]
+
+        print(f"Repository: {owner}/{repo_name}")
+        print("Members collaborating on the repository:")
+        for member in member_names:
+            print(member)
+
+            member_permissions = get_member_permissions(member, repo)
+
+            if member in individual_collaborators:
+                # If this member has been found before, compare the permissions
+                if (
+                    permissions_priority[member_permissions]
+                    > permissions_priority[
+                        individual_collaborators[member]["permissions"]
+                    ]
+                ):
+                    individual_collaborators[member][
+                        "permissions"
+                    ] = member_permissions
+            else:
+                # Add this member to the dictionary
+                individual_collaborators[member] = {
+                    "repository": repo_name,
+                    "permissions": member_permissions,
+                }
+
+        print()
+        print()
+
+    # Save individual_collaborators to a JSON file
+    with open("individual_collaborators.json", "w") as file:
+        json.dump(individual_collaborators, file, indent=4)
+
+    return individual_collaborators  # return the dictionary of individual collaborators
+
+
+def get_member_permissions(member, repo):
+    permissions_data = github_api_request(
+        f"/repos/{repo}/collaborators/{member}/permission"
+    )
+    return permissions_data["permission"]
+
+
+def get_team_permissions(team_name, repo):
+    teams_data = github_api_request(f"/repos/{repo}/teams")
+    for team in teams_data:
+        if team["name"] == team_name:
+            return team["permission"]
+    return None
+
+
+def compare_permissions(
+    member, member_permissions, team_name, team_permissions
+):
+    if member_permissions is None or team_permissions is None:
+        return
+
+    print(f"Comparing permissions for {member} in team {team_name}")
+    print(f"Member permissions: {member_permissions}")
+    print(f"Team permissions: {team_permissions}")
+
+    if member_permissions == team_permissions:
+        print("Member and team have the same level of permission.")
+    elif member_permissions == "admin":
+        print("Member has greater privilege than the team.")
+        return "member_has_more_privilege"  # Return a string when member has more privilege
+    elif team_permissions == "admin":
+        print("Team has greater privilege than the member.")
+    else:
+        print(
+            "Member and team have different levels of permission, but neither has greater privilege."
+        )
+    print()
+
+
+def get_teams_with_members():
+
+    teams_data = github_api_request(f"/orgs/{org}/teams")
+
+    teams_with_members = {}
+
+    # Iterate through each team
+    for team in teams_data:
+        team_name = team["name"]
+        team_members_data = github_api_request(f"/teams/{team['id']}/members")
+
+        # Add team members to the team
+        team_members = []
+        for team_member in team_members_data:
+            team_members.append(team_member["login"])
+
+        teams_with_members[team_name] = team_members
+
+    return teams_with_members
+
+
 def github_api_request(endpoint: str) -> list:
     """
     Make a request to the GitHub API.
@@ -320,6 +441,9 @@ def github_api_request(endpoint: str) -> list:
         fields=params,
         headers=headers,
     )
+
+    if response.status != 200:
+        print("Failed to retrieve data:", response.status)
 
     data = json.loads(response.data.decode("utf-8"))
 
@@ -365,7 +489,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|repo-team-collab|all]"
         )
         sys.exit(1)
 
@@ -379,6 +503,8 @@ if __name__ == "__main__":
         get_repo_info()
     elif sys.argv[1] == "repo-collab":
         get_collaborators()
+    elif sys.argv[1] == "repo-team-collab":
+        get_all_collaborators()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
