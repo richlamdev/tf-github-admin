@@ -306,6 +306,9 @@ permissions_priority = {
 }
 
 
+permissions_priority = {"read": 1, "write": 2, "admin": 3}
+
+
 def get_all_collaborators():
     teams_and_members = get_teams_with_members()
     repos_data = github_api_request(f"/orgs/{org}/repos")
@@ -313,8 +316,11 @@ def get_all_collaborators():
         repo["full_name"] for repo in repos_data if not repo["archived"]
     ]
 
-    # Use a dictionary to store individual collaborators and their highest permission
-    individual_collaborators = {}
+    collaborator_permissions = {}  # Dictionary to track highest permissions
+
+    repo_collaborators = (
+        {}
+    )  # Dictionary to hold all collaborators for each repository
 
     for repo in repositories:
         owner, repo_name = repo.split("/")
@@ -326,44 +332,65 @@ def get_all_collaborators():
 
         print(f"Repository: {owner}/{repo_name}")
         print("Members collaborating on the repository:")
+
+        # List to hold collaborators for this repository
+        collaborators = []
         for member in member_names:
             print(member)
 
+            # Get the member permissions
             member_permissions = get_member_permissions(member, repo)
 
-            if member in individual_collaborators:
-                # If this member has been found before, compare the permissions
+            # If this member has been found before, compare the permissions
+            if member in collaborator_permissions:
                 if (
                     permissions_priority[member_permissions]
-                    > permissions_priority[
-                        individual_collaborators[member]["permissions"]
-                    ]
+                    > permissions_priority[collaborator_permissions[member]]
                 ):
-                    individual_collaborators[member][
-                        "permissions"
-                    ] = member_permissions
+                    # Update permission in collaborator_permissions dictionary
+                    collaborator_permissions[member] = member_permissions
             else:
-                # Add this member to the dictionary
-                individual_collaborators[member] = {
-                    "repository": repo_name,
-                    "permissions": member_permissions,
-                }
+                # Add this member to the collaborator_permissions dictionary
+                collaborator_permissions[member] = member_permissions
 
-        print()
-        print()
+            collaborator = {
+                "username": member,
+                "permissions": collaborator_permissions[member],
+            }
 
-    # Save individual_collaborators to a JSON file
+            # Add this collaborator to the collaborators list
+            collaborators.append(collaborator)
+
+        # Add the collaborators list to the repo_collaborators dictionary
+        repo_collaborators[repo_name] = collaborators
+
+    # Save repo_collaborators to a JSON file
     with open("individual_collaborators.json", "w") as file:
-        json.dump(individual_collaborators, file, indent=4)
+        json.dump(repo_collaborators, file, indent=4)
 
-    return individual_collaborators  # return the dictionary of individual collaborators
+    return collaborator_permissions
 
 
-def get_member_permissions(member, repo):
-    permissions_data = github_api_request(
-        f"/repos/{repo}/collaborators/{member}/permission"
+def get_member_permissions(username, repo):
+    """Get member permissions for a repository."""
+    permission_data = github_api_request(
+        f"/repos/{repo}/collaborators/{username}/permission"
     )
-    return permissions_data["permission"]
+
+    user_permissions = permission_data["user"]["permissions"]
+    # Assuming "read" < "write" < "maintain" < "triage" < "admin"
+    permissions_priority = {
+        "pull": 1,
+        "push": 2,
+        "maintain": 3,
+        "triage": 4,
+        "admin": 5,
+    }
+    highest_permission = max(
+        user_permissions, key=lambda p: permissions_priority[p]
+    )
+
+    return highest_permission
 
 
 def get_team_permissions(team_name, repo):
