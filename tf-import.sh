@@ -45,17 +45,36 @@ function import_team_membership() {
 }
 
 
-function import_repo_collaborator() {
-  # Path to the JSON file containing collaborator data
-  json_file="repo-collaborators.json"
+# function import_repo_collaborator() {
+#   # Path to the JSON file containing collaborator data
+#   json_file="repo-collaborators.json"
 
-  # Retrieve the list of collaborators from the JSON file
-  collaborators=$(jq -r '.[] | "\(.repo) \(.user)"' "$json_file")
+#   # Retrieve the list of collaborators from the JSON file
+#   collaborators=$(jq -r '.[] | "\(.repo) \(.user)"' "$json_file")
 
-  # Loop through each collaborator and perform the Terraform import
-  while read -r repo user; do
-    terraform import "github_repository_collaborator.collaborator[\"$repo-$user\"]" "$repo:$user"
-  done <<< "$collaborators"
+#   # Loop through each collaborator and perform the Terraform import
+#   while read -r repo user; do
+#     terraform import "github_repository_collaborator.collaborator[\"$repo-$user\"]" "$repo:$user"
+#   done <<< "$collaborators"
+# }
+
+
+import_repo_collaborator() {
+    local json_file="individual_collaborators.json"
+
+    local collaborators=$(cat "$json_file")
+    local repos=$(echo "$collaborators" | jq -r 'keys[]')
+
+    for repo in $repos
+    do
+      local users=$(echo "$collaborators" | jq -r --arg REPO "$repo" '.[$REPO][] | .username')
+
+      for user in $users
+      do
+        echo "Importing collaborator $user for repository $repo..."
+        terraform import github_repository_collaborators.collaborator[\"$repo\"] "$repo"
+      done
+    done
 }
 
 

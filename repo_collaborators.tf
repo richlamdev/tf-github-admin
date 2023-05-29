@@ -1,22 +1,24 @@
-locals {
-  collaborators = jsondecode(file("repo-collaborators.json"))
-
-  repository_collaborators = {
-    for collab in local.collaborators :
-     "${collab.repo}_${collab.user}" => {
-      repository = collab.repo
-      username   = collab.user
-      permission = collab.permission
-    }
-  }
+data "local_file" "collaborators_json" {
+  filename = "individual_collaborators.json"
 }
 
-resource "github_repository_collaborator" "collaborator" {
-  for_each = { for collab in local.repository_collaborators : "${collab.repository}-${collab.username}" => collab }
+locals {
+  #collaborators_data = jsondecode(data.local_file.collaborators_json.content)
+  collaborators_data = jsondecode(file("individual_collaborators.json"))
+}
 
-  repository = each.value.repository
-  username   = each.value.username
-  permission = each.value.permission
-  #permission_diff_suppression = true
+resource "github_repository_collaborators" "collaborator" {
+  #for_each = { for repo, collaborators in local.collaborators_data : repo => collaborators }
+  for_each = { for repo, collaborators in local.collaborators_data : "${repo}" => collaborators }
+
+  repository = each.key
+  dynamic "user" {
+    for_each = each.value
+    content {
+      username   = user.value.username
+      permission = user.value.permissions
+    }
+  }
+  # Assuming no team block in this example, as it's not in the JSON input data
 }
 
