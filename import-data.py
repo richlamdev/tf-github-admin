@@ -250,51 +250,182 @@ def get_repo_info():
 
 
 # def get_github_data(org_name, personal_access_token):
-def get_collaborators():
+# def get_collaborators():
 
-    repos = github_api_request(f"/orgs/{org}/repos")
+#     repos = github_api_request(f"/orgs/{org}/repos")
+
+#     collaborators = []
+#     # Weights for the permissions
+#     permission_weights = {
+#         "admin": 5,
+#         "maintain": 4,
+#         "push": 3,
+#         "triage": 2,
+#         "pull": 1,
+#     }
+
+#     # Loop through all repos
+#     for repo in repos:
+#         # Endpoint to get all collaborators in a repo
+#         collabs = github_api_request(
+#             f"/repos/{org}/{repo['name']}/collaborators"
+#         )
+
+#         # Loop through all collaborators
+#         for collab in collabs:
+#             permissions = collab["permissions"]
+
+#             max_permission = max(
+#                 (perm for perm, has_perm in permissions.items() if has_perm),
+#                 key=permission_weights.get,
+#             )
+
+#             # JSON schema
+#             collaborators.append(
+#                 {
+#                     "repo": repo["name"],
+#                     "user": collab["login"],
+#                     "permission": max_permission,
+#                 }
+#             )
+
+#     COLLABORATORS_JSON = "repo-collaborators.json"
+#     with open(COLLABORATORS_JSON, "w") as f:
+#         json.dump(collaborators, f, indent=4)
+
+#     print(
+#         f"\nList of repo collaborators information written to {COLLABORATORS_JSON}\n"
+#     )
+
+
+def get_organization_repos():
+    # Get all repos from the organization
+    all_repos = github_api_request(f"/orgs/{org}/repos")
+
+    # Filter only non-archived repos
+    non_archived_repos = [
+        repo for repo in all_repos if not repo.get("archived", False)
+    ]
+
+    return non_archived_repos
+
+
+def get_collaborators(repo_name):
+    # Get all collaborators from a repo
+    collaborators_data = github_api_request(
+        f"/repos/{org}/{repo_name}/collaborators"
+    )
 
     collaborators = []
-    # Weights for the permissions
-    permission_weights = {
-        "admin": 5,
-        "maintain": 4,
-        "push": 3,
-        "triage": 2,
-        "pull": 1,
-    }
-
-    # Loop through all repos
-    for repo in repos:
-        # Endpoint to get all collaborators in a repo
-        collabs = github_api_request(
-            f"/repos/{org}/{repo['name']}/collaborators"
+    for data in collaborators_data:
+        collaborators.append(
+            {
+                "name": data.get("login"),
+                "permissions": data.get("permissions", {}),
+            }
         )
 
-        # Loop through all collaborators
-        for collab in collabs:
-            permissions = collab["permissions"]
+    return collaborators
 
-            max_permission = max(
-                (perm for perm, has_perm in permissions.items() if has_perm),
-                key=permission_weights.get,
-            )
 
-            # JSON schema
-            collaborators.append(
+def get_collaborators_teams(repo_name):
+    # Get all teams associated with a repo
+    teams_data = github_api_request(f"/repos/{org}/{repo_name}/teams")
+
+    teams = []
+    for data in teams_data:
+        teams.append(
+            {
+                "name": data.get("slug"),
+                "permissions": data.get("permissions", {}),
+            }
+        )
+
+    return teams
+
+
+def get_highest_permission(permissions):
+    permission_order = ["admin", "maintain", "push", "triage", "pull"]
+
+    for permission in permission_order:
+        if permissions.get(permission, False):
+            return permission
+
+    return None
+
+
+def get_team_members(team_name):
+    # Get all members of a team
+    members_data = github_api_request(f"/orgs/{org}/teams/{team_name}/members")
+
+    members = [data.get("login") for data in members_data]
+
+    return members
+
+
+def get_collaborators_and_teams():
+    repos = get_organization_repos()
+
+    all_collaborators_and_teams = {}
+    for repo in repos:
+        repo_name = repo.get("name")
+        collaborators = get_collaborators(repo_name)
+        teams = get_collaborators_teams(repo_name)
+
+        repo_entry = all_collaborators_and_teams.setdefault(
+            repo_name, {"users": [], "teams": []}
+        )
+
+        # Create a dictionary to store team permissions and members
+        team_info = {}
+        for team in teams:
+            permissions = team.get("permissions", {})
+            highest_permission = get_highest_permission(permissions)
+            members = get_team_members(team.get("name"))
+            team_info[team.get("name")] = {
+                "permission": highest_permission,
+                "members": members,
+            }
+            repo_entry["teams"].append(
                 {
-                    "repo": repo["name"],
-                    "user": collab["login"],
-                    "permission": max_permission,
+                    "team_id": team.get("name"),
+                    "permission": highest_permission,
                 }
             )
 
+        for collaborator in collaborators:
+            permissions = collaborator.get("permissions", {})
+            highest_permission = get_highest_permission(permissions)
+
+            # Check if the collaborator is part of a team and if their permissions differ
+            is_in_team = False
+            for team, info in team_info.items():
+                if collaborator.get("name") in info["members"]:
+                    is_in_team = True
+                    if highest_permission != info["permission"]:
+                        repo_entry["users"].append(
+                            {
+                                "username": collaborator.get("name"),
+                                "permission": highest_permission,
+                            }
+                        )
+                    break
+
+            # If the collaborator is not part of any team, add them to the JSON output
+            if not is_in_team:
+                repo_entry["users"].append(
+                    {
+                        "username": collaborator.get("name"),
+                        "permission": highest_permission,
+                    }
+                )
+
     COLLABORATORS_JSON = "repo-collaborators.json"
     with open(COLLABORATORS_JSON, "w") as f:
-        json.dump(collaborators, f, indent=4)
+        json.dump(all_collaborators_and_teams, f, indent=4)
 
     print(
-        f"\nList of repo collaborators information written to {COLLABORATORS_JSON}\n"
+        f"\nList of repo collaborators and teams information written to {COLLABORATORS_JSON}\n"
     )
 
 
@@ -320,6 +451,9 @@ def github_api_request(endpoint: str) -> list:
         fields=params,
         headers=headers,
     )
+
+    if response.status != 200:
+        print("Failed to retrieve data:", response.status)
 
     data = json.loads(response.data.decode("utf-8"))
 
@@ -365,7 +499,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|repo-team-collab|all]"
         )
         sys.exit(1)
 
@@ -379,6 +513,8 @@ if __name__ == "__main__":
         get_repo_info()
     elif sys.argv[1] == "repo-collab":
         get_collaborators()
+    elif sys.argv[1] == "repo-team-collab":
+        get_collaborators_and_teams()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()

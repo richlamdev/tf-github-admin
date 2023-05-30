@@ -1,22 +1,26 @@
 locals {
-  collaborators = jsondecode(file("repo-collaborators.json"))
-
-  repository_collaborators = {
-    for collab in local.collaborators :
-     "${collab.repo}_${collab.user}" => {
-      repository = collab.repo
-      username   = collab.user
-      permission = collab.permission
-    }
-  }
+  data = jsondecode(file("repo-collaborators.json"))
 }
 
-resource "github_repository_collaborator" "collaborator" {
-  for_each = { for collab in local.repository_collaborators : "${collab.repository}-${collab.username}" => collab }
+resource "github_repository_collaborators" "collaborators" {
+  for_each = local.data
 
-  repository = each.value.repository
-  username   = each.value.username
-  permission = each.value.permission
-  #permission_diff_suppression = true
+  repository = each.key
+
+  dynamic "user" {
+    for_each = each.value.users
+    content {
+      username  = user.value.username
+      permission = user.value.permission
+    }
+  }
+
+  dynamic "team" {
+    for_each = each.value.teams
+    content {
+      team_id    = team.value.team_id
+      permission = team.value.permission
+    }
+  }
 }
 
