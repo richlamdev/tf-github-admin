@@ -354,6 +354,15 @@ def get_highest_permission(permissions):
     return None
 
 
+def get_team_members(team_name):
+    # Get all members of a team
+    members_data = github_api_request(f"/orgs/{org}/teams/{team_name}/members")
+
+    members = [data.get("login") for data in members_data]
+
+    return members
+
+
 def get_collaborators_and_teams():
     repos = get_organization_repos()
 
@@ -367,25 +376,49 @@ def get_collaborators_and_teams():
             repo_name, {"users": [], "teams": []}
         )
 
-        for collaborator in collaborators:
-            permissions = collaborator.get("permissions", {})
-            highest_permission = get_highest_permission(permissions)
-            repo_entry["users"].append(
-                {
-                    "username": collaborator.get("name"),
-                    "permission": highest_permission,
-                }
-            )
-
+        # Create a dictionary to store team permissions and members
+        team_info = {}
         for team in teams:
             permissions = team.get("permissions", {})
             highest_permission = get_highest_permission(permissions)
+            members = get_team_members(team.get("name"))
+            team_info[team.get("name")] = {
+                "permission": highest_permission,
+                "members": members,
+            }
             repo_entry["teams"].append(
                 {
                     "team_id": team.get("name"),
                     "permission": highest_permission,
                 }
             )
+
+        for collaborator in collaborators:
+            permissions = collaborator.get("permissions", {})
+            highest_permission = get_highest_permission(permissions)
+
+            # Check if the collaborator is part of a team and if their permissions differ
+            is_in_team = False
+            for team, info in team_info.items():
+                if collaborator.get("name") in info["members"]:
+                    is_in_team = True
+                    if highest_permission != info["permission"]:
+                        repo_entry["users"].append(
+                            {
+                                "username": collaborator.get("name"),
+                                "permission": highest_permission,
+                            }
+                        )
+                    break
+
+            # If the collaborator is not part of any team, add them to the JSON output
+            if not is_in_team:
+                repo_entry["users"].append(
+                    {
+                        "username": collaborator.get("name"),
+                        "permission": highest_permission,
+                    }
+                )
 
     COLLABORATORS_JSON = "repo-collaborators.json"
     with open(COLLABORATORS_JSON, "w") as f:
