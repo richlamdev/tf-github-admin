@@ -250,52 +250,52 @@ def get_repo_info():
 
 
 # def get_github_data(org_name, personal_access_token):
-def get_collaborators():
+# def get_collaborators():
 
-    repos = github_api_request(f"/orgs/{org}/repos")
+#     repos = github_api_request(f"/orgs/{org}/repos")
 
-    collaborators = []
-    # Weights for the permissions
-    permission_weights = {
-        "admin": 5,
-        "maintain": 4,
-        "push": 3,
-        "triage": 2,
-        "pull": 1,
-    }
+#     collaborators = []
+#     # Weights for the permissions
+#     permission_weights = {
+#         "admin": 5,
+#         "maintain": 4,
+#         "push": 3,
+#         "triage": 2,
+#         "pull": 1,
+#     }
 
-    # Loop through all repos
-    for repo in repos:
-        # Endpoint to get all collaborators in a repo
-        collabs = github_api_request(
-            f"/repos/{org}/{repo['name']}/collaborators"
-        )
+#     # Loop through all repos
+#     for repo in repos:
+#         # Endpoint to get all collaborators in a repo
+#         collabs = github_api_request(
+#             f"/repos/{org}/{repo['name']}/collaborators"
+#         )
 
-        # Loop through all collaborators
-        for collab in collabs:
-            permissions = collab["permissions"]
+#         # Loop through all collaborators
+#         for collab in collabs:
+#             permissions = collab["permissions"]
 
-            max_permission = max(
-                (perm for perm, has_perm in permissions.items() if has_perm),
-                key=permission_weights.get,
-            )
+#             max_permission = max(
+#                 (perm for perm, has_perm in permissions.items() if has_perm),
+#                 key=permission_weights.get,
+#             )
 
-            # JSON schema
-            collaborators.append(
-                {
-                    "repo": repo["name"],
-                    "user": collab["login"],
-                    "permission": max_permission,
-                }
-            )
+#             # JSON schema
+#             collaborators.append(
+#                 {
+#                     "repo": repo["name"],
+#                     "user": collab["login"],
+#                     "permission": max_permission,
+#                 }
+#             )
 
-    COLLABORATORS_JSON = "repo-collaborators.json"
-    with open(COLLABORATORS_JSON, "w") as f:
-        json.dump(collaborators, f, indent=4)
+#     COLLABORATORS_JSON = "repo-collaborators.json"
+#     with open(COLLABORATORS_JSON, "w") as f:
+#         json.dump(collaborators, f, indent=4)
 
-    print(
-        f"\nList of repo collaborators information written to {COLLABORATORS_JSON}\n"
-    )
+#     print(
+#         f"\nList of repo collaborators information written to {COLLABORATORS_JSON}\n"
+#     )
 
 
 def get_organization_repos():
@@ -328,7 +328,7 @@ def get_collaborators(repo_name):
     return collaborators
 
 
-def get_teams(repo_name):
+def get_collaborators_teams(repo_name):
     # Get all teams associated with a repo
     teams_data = github_api_request(f"/repos/{org}/{repo_name}/teams")
 
@@ -361,7 +361,7 @@ def get_collaborators_and_teams():
     for repo in repos:
         repo_name = repo.get("name")
         collaborators = get_collaborators(repo_name)
-        teams = get_teams(repo_name)
+        teams = get_collaborators_teams(repo_name)
 
         repo_entry = all_collaborators_and_teams.setdefault(
             repo_name, {"users": [], "teams": []}
