@@ -298,152 +298,91 @@ def get_collaborators():
     )
 
 
-# Define a dictionary to store permissions
-permissions_priority = {
-    "read": 1,
-    "write": 2,
-    "admin": 3,
-}
+def get_organization_repos():
+    # Get all repos from the organization
+    all_repos = github_api_request(f"/orgs/{org}/repos")
 
-
-permissions_priority = {"read": 1, "write": 2, "admin": 3}
-
-
-def get_all_collaborators():
-    teams_and_members = get_teams_with_members()
-    repos_data = github_api_request(f"/orgs/{org}/repos")
-    repositories = [
-        repo["full_name"] for repo in repos_data if not repo["archived"]
+    # Filter only non-archived repos
+    non_archived_repos = [
+        repo for repo in all_repos if not repo.get("archived", False)
     ]
 
-    collaborator_permissions = {}  # Dictionary to track highest permissions
+    return non_archived_repos
 
-    repo_collaborators = (
-        {}
-    )  # Dictionary to hold all collaborators for each repository
 
-    for repo in repositories:
-        owner, repo_name = repo.split("/")
+def get_collaborators(repo_name):
+    # Get all collaborators from a repo
+    collaborators_data = github_api_request(
+        f"/repos/{org}/{repo_name}/collaborators"
+    )
 
-        members_data = github_api_request(
-            f"/repos/{owner}/{repo_name}/collaborators"
-        )
-        member_names = [member["login"] for member in members_data]
-
-        print(f"Repository: {owner}/{repo_name}")
-        print("Members collaborating on the repository:")
-
-        # List to hold collaborators for this repository
-        collaborators = []
-        for member in member_names:
-            print(member)
-
-            # Get the member permissions
-            member_permissions = get_member_permissions(member, repo)
-
-            # If this member has been found before, compare the permissions
-            if member in collaborator_permissions:
-                if (
-                    permissions_priority[member_permissions]
-                    > permissions_priority[collaborator_permissions[member]]
-                ):
-                    # Update permission in collaborator_permissions dictionary
-                    collaborator_permissions[member] = member_permissions
-            else:
-                # Add this member to the collaborator_permissions dictionary
-                collaborator_permissions[member] = member_permissions
-
-            collaborator = {
-                "username": member,
-                "permissions": collaborator_permissions[member],
+    collaborators = []
+    for data in collaborators_data:
+        collaborators.append(
+            {
+                "name": data.get("login"),
+                "permissions": data.get("permissions", {}),
             }
+        )
 
-            # Add this collaborator to the collaborators list
-            collaborators.append(collaborator)
-
-        # Add the collaborators list to the repo_collaborators dictionary
-        repo_collaborators[repo_name] = collaborators
-
-    # Save repo_collaborators to a JSON file
-    with open("individual_collaborators.json", "w") as file:
-        json.dump(repo_collaborators, file, indent=4)
-
-    return collaborator_permissions
+    return collaborators
 
 
-def get_member_permissions(username, repo):
-    """Get member permissions for a repository."""
-    permission_data = github_api_request(
-        f"/repos/{repo}/collaborators/{username}/permission"
-    )
+def get_teams(repo_name):
+    # Get all teams associated with a repo
+    teams_data = github_api_request(f"/repos/{org}/{repo_name}/teams")
 
-    user_permissions = permission_data["user"]["permissions"]
-    # Assuming "read" < "write" < "maintain" < "triage" < "admin"
-    permissions_priority = {
-        "pull": 1,
-        "push": 2,
-        "maintain": 3,
-        "triage": 4,
-        "admin": 5,
-    }
-    highest_permission = max(
-        user_permissions, key=lambda p: permissions_priority[p]
-    )
+    teams = []
+    for data in teams_data:
+        teams.append(
+            {
+                "name": data.get("slug"),
+                "permissions": data.get("permissions", {}),
+            }
+        )
 
-    return highest_permission
+    return teams
 
 
-def get_team_permissions(team_name, repo):
-    teams_data = github_api_request(f"/repos/{repo}/teams")
-    for team in teams_data:
-        if team["name"] == team_name:
-            return team["permission"]
+def get_highest_permission(permissions):
+    permission_order = ["admin", "maintain", "push", "triage", "pull"]
+
+    for permission in permission_order:
+        if permissions.get(permission, False):
+            return permission
+
     return None
 
 
-def compare_permissions(
-    member, member_permissions, team_name, team_permissions
-):
-    if member_permissions is None or team_permissions is None:
-        return
+def get_collaborators_and_teams():
+    repos = get_organization_repos()
 
-    print(f"Comparing permissions for {member} in team {team_name}")
-    print(f"Member permissions: {member_permissions}")
-    print(f"Team permissions: {team_permissions}")
+    all_collaborators_and_teams = {}
+    for repo in repos:
+        repo_name = repo.get("name")
+        collaborators = get_collaborators(repo_name)
+        teams = get_teams(repo_name)
 
-    if member_permissions == team_permissions:
-        print("Member and team have the same level of permission.")
-    elif member_permissions == "admin":
-        print("Member has greater privilege than the team.")
-        return "member_has_more_privilege"  # Return a string when member has more privilege
-    elif team_permissions == "admin":
-        print("Team has greater privilege than the member.")
-    else:
-        print(
-            "Member and team have different levels of permission, but neither has greater privilege."
-        )
-    print()
+        repo_entry = all_collaborators_and_teams.setdefault(repo_name, {})
 
+        for collaborator in collaborators:
+            permissions = collaborator.get("permissions", {})
+            highest_permission = get_highest_permission(permissions)
+            repo_entry[collaborator.get("name")] = {
+                "type": "collaborator",
+                "permissions": highest_permission,
+            }
 
-def get_teams_with_members():
+        for team in teams:
+            permissions = team.get("permissions", {})
+            highest_permission = get_highest_permission(permissions)
+            repo_entry[team.get("name")] = {
+                "type": "team",
+                "permissions": highest_permission,
+            }
 
-    teams_data = github_api_request(f"/orgs/{org}/teams")
-
-    teams_with_members = {}
-
-    # Iterate through each team
-    for team in teams_data:
-        team_name = team["name"]
-        team_members_data = github_api_request(f"/teams/{team['id']}/members")
-
-        # Add team members to the team
-        team_members = []
-        for team_member in team_members_data:
-            team_members.append(team_member["login"])
-
-        teams_with_members[team_name] = team_members
-
-    return teams_with_members
+    # print in a formatted way
+    print(json.dumps(all_collaborators_and_teams, indent=4))
 
 
 def github_api_request(endpoint: str) -> list:
@@ -531,7 +470,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "repo-collab":
         get_collaborators()
     elif sys.argv[1] == "repo-team-collab":
-        get_all_collaborators()
+        get_collaborators_and_teams()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
