@@ -499,7 +499,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|repo-team-collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repo-team-collab|all]"
         )
         sys.exit(1)
 
@@ -509,14 +509,14 @@ if __name__ == "__main__":
         get_teams()
     elif sys.argv[1] == "team-membership":
         get_team_membership()
-    elif sys.argv[1] == "repos":
-        get_repo_info()
-    elif sys.argv[1] == "repo-collab":
-        get_collaborators()
+    #    elif sys.argv[1] == "repos":
+    #        get_repo_info()
+    # elif sys.argv[1] == "repo-collab":
+    # get_collaborators()
     elif sys.argv[1] == "repo-team-collab":
         get_collaborators_and_teams()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
         get_team_membership()
-        get_collaborators()
+        get_collaborators_and_teams()

@@ -1,56 +1,73 @@
-[
-    {
-        "repository": "demo-repository",
-        "team": [
-            {
-                "team_id": "avengers",
-                "permission": "push"
-            }
-        ],
-        "user": [
+{
+    "repo-1": {
+        "users": [
             {
                 "username": "batman",
                 "permission": "admin"
             },
             {
                 "username": "superman",
-                "permission": "read"
+                "permission": "pull"
+            }
+        ],
+        "teams": [
+            {
+                "team_id": "the-avengers",
+                "permission": "push"
             }
         ]
     },
-    {
-        "repository": "fake-repository",
-        "team": [
-            {
-                "team_id": "autobots",
-                "permission": "pull"
-            },
-            {
-                "team_id": "decepticons",
-                "permission": "pull"
-            },
-            {
-                "team_id": "justiceleague",
-                "permission": "maintain"
-            }
-        ],
-        "user": [
+    "repo-2": {
+        "users": [
             {
                 "username": "greenlantern",
-                "permission": "read"
+                "permission": "push"
             },
             {
                 "username": "theflash",
-                "permission": "maintain"
-            },
-            {
-                "username": "bumblebee",
                 "permission": "admin"
             },
             {
-                "username": "thepunisher",
-                "permission": "read"
+                "username": "ironman",
+                "permission": "admin"
+            },
+            {
+                "username": "goldilocks",
+                "permission": "admin"
+            }
+        ],
+        "teams": [
+            {
+                "team_id": "autobots",
+                "permission": "push"
+            },
+            {
+                "team_id": "decepticons",
+                "permission": "maintain"
+            }
+        ]
+    },
+    "repo-3": {
+        "users": [
+            {
+                "username": "theowneroftheorg",
+                "permission": "admin"
+            }
+        ],
+        "teams": []
+    },
+    "repo-4": {
+        "users": [
+            {
+                "username": "gandalf",
+                "permission": "admin"
+            }
+        ],
+        "teams": [
+            {
+                "team_id": "the-a-team",
+                "permission": "triage"
             }
         ]
     }
-]
+}
