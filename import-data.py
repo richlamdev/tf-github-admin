@@ -363,26 +363,37 @@ def get_collaborators_and_teams():
         collaborators = get_collaborators(repo_name)
         teams = get_teams(repo_name)
 
-        repo_entry = all_collaborators_and_teams.setdefault(repo_name, {})
+        repo_entry = all_collaborators_and_teams.setdefault(
+            repo_name, {"users": [], "teams": []}
+        )
 
         for collaborator in collaborators:
             permissions = collaborator.get("permissions", {})
             highest_permission = get_highest_permission(permissions)
-            repo_entry[collaborator.get("name")] = {
-                "type": "collaborator",
-                "permissions": highest_permission,
-            }
+            repo_entry["users"].append(
+                {
+                    "username": collaborator.get("name"),
+                    "permission": highest_permission,
+                }
+            )
 
         for team in teams:
             permissions = team.get("permissions", {})
             highest_permission = get_highest_permission(permissions)
-            repo_entry[team.get("name")] = {
-                "type": "team",
-                "permissions": highest_permission,
-            }
+            repo_entry["teams"].append(
+                {
+                    "team_id": team.get("name"),
+                    "permission": highest_permission,
+                }
+            )
 
-    # print in a formatted way
-    print(json.dumps(all_collaborators_and_teams, indent=4))
+    COLLABORATORS_JSON = "repo-collaborators.json"
+    with open(COLLABORATORS_JSON, "w") as f:
+        json.dump(all_collaborators_and_teams, f, indent=4)
+
+    print(
+        f"\nList of repo collaborators and teams information written to {COLLABORATORS_JSON}\n"
+    )
 
 
 def github_api_request(endpoint: str) -> list:

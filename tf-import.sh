@@ -60,22 +60,17 @@ function import_team_membership() {
 
 
 import_repo_collaborator() {
-    local json_file="individual_collaborators.json"
-
-    local collaborators=$(cat "$json_file")
-    local repos=$(echo "$collaborators" | jq -r 'keys[]')
-
-    for repo in $repos
+    FILE="repo-collaborators.json"
+    REPO_NAME=$(jq -r 'keys[]' $FILE)
+    for repo in $REPO_NAME
     do
-      local users=$(echo "$collaborators" | jq -r --arg REPO "$repo" '.[$REPO][] | .username')
-
-      for user in $users
-      do
-        echo "Importing collaborator $user for repository $repo..."
-        terraform import github_repository_collaborators.collaborator[\"$repo\"] "$repo"
-      done
+        terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
     done
 }
+
+# Call the function with your JSON file as an argument
+#import_collaborators input.json
+
 
 
 function main {
