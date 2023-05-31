@@ -182,22 +182,6 @@ def get_repo_info():
     and writes the repository information to individual JSON files, where each file name
     is the name of the repository.
     """
-    # Create a urllib3 PoolManager instance
-    # http = urllib3.PoolManager()
-
-    # Construct the API request URL
-    # url = f"https://api.github.com/orgs/{org}/repos"
-
-    # Add headers to the request to authenticate with the GitHub API
-    # headers = {
-    # "User-Agent": "python",
-    # "Authorization": "token YOUR_GITHUB_TOKEN",
-    # }
-
-    # Send the GET request to the GitHub API and parse the JSON response
-    # response = http.request("GET", url, headers=headers)
-    # data = json.loads(response.data.decode("utf-8"))
-    # data = github_api_request(f"/orgs/{org}/repos")
     data = github_api_request(f"/orgs/{org}/repos")
 
     repo_name = []
@@ -247,55 +231,6 @@ def get_repo_info():
 #        file_name = repo_info["name"] + ".json"
 #        file_path = f"./repos/{file_name}"
 #        write_repo_info_to_file(repo_info, file_path)
-
-
-# def get_github_data(org_name, personal_access_token):
-# def get_collaborators():
-
-#     repos = github_api_request(f"/orgs/{org}/repos")
-
-#     collaborators = []
-#     # Weights for the permissions
-#     permission_weights = {
-#         "admin": 5,
-#         "maintain": 4,
-#         "push": 3,
-#         "triage": 2,
-#         "pull": 1,
-#     }
-
-#     # Loop through all repos
-#     for repo in repos:
-#         # Endpoint to get all collaborators in a repo
-#         collabs = github_api_request(
-#             f"/repos/{org}/{repo['name']}/collaborators"
-#         )
-
-#         # Loop through all collaborators
-#         for collab in collabs:
-#             permissions = collab["permissions"]
-
-#             max_permission = max(
-#                 (perm for perm, has_perm in permissions.items() if has_perm),
-#                 key=permission_weights.get,
-#             )
-
-#             # JSON schema
-#             collaborators.append(
-#                 {
-#                     "repo": repo["name"],
-#                     "user": collab["login"],
-#                     "permission": max_permission,
-#                 }
-#             )
-
-#     COLLABORATORS_JSON = "repo-collaborators.json"
-#     with open(COLLABORATORS_JSON, "w") as f:
-#         json.dump(collaborators, f, indent=4)
-
-#     print(
-#         f"\nList of repo collaborators information written to {COLLABORATORS_JSON}\n"
-#     )
 
 
 def get_organization_repos():
