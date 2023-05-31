@@ -16,6 +16,7 @@ function import_members() {
   done
 }
 
+
 function import_teams() {
   teams_file="teams.json"
 
@@ -45,7 +46,7 @@ function import_team_membership() {
 }
 
 
-import_repo_collaborator() {
+function import_repo_collaborator() {
     FILE="repo-collaborators.json"
     REPO_NAME=$(jq -r 'keys[]' $FILE)
     for repo in $REPO_NAME
@@ -53,7 +54,6 @@ import_repo_collaborator() {
         terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
     done
 }
-
 
 
 function main {
