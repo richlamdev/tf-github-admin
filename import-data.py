@@ -4,6 +4,8 @@ import urllib3
 import sys
 import pathlib
 
+# from pathlib import Path
+
 
 def get_members() -> None:
     """
@@ -102,7 +104,7 @@ def get_team_membership() -> None:
                 {"username": member["login"], "role": team_member_role}
             )
 
-    TEAM_MEMBERSHIP_JSON = "team_memberships.json"
+    TEAM_MEMBERSHIP_JSON = "team-memberships.json"
     with open(TEAM_MEMBERSHIP_JSON, "w") as f:
         json.dump(teams, f, indent=4)
 
@@ -168,69 +170,132 @@ def get_team_membership_files() -> None:
     print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
-def write_repo_info_to_file(repo_info, file_path):
+def write_repo_info_to_file(repo_info, file_path) -> None:
     """
     Writes repository information to a JSON file.
     """
     with open(file_path, "w") as f:
-        json.dump(repo_info, f)
+        json.dump(repo_info, f, indent=4)
 
 
 def get_repo_info():
     """
-    Queries all GitHub repositories belonging to a specific organization for information
-    and writes the repository information to individual JSON files, where each file name
-    is the name of the repository.
+    Queries all GitHub repositories belonging to a specific organization for
+    information and writes the repository information to individual JSON files,
+    where each file name is the name of the repository.
     """
-    data = github_api_request(f"/orgs/{org}/repos")
+    # data = github_api_request(f"/orgs/{org}/repos")
 
-    repo_name = []
-    branch_name = []
+    directory_path = pathlib.Path("repos")
 
-    for repo in data:
-        file_name = repo["name"] + ".json"
-        file_path = f"./repos/{file_name}"
-        with open(file_path, "w") as f:
-            json.dump(repo, f, indent=4)
+    if not directory_path.exists():
+        directory_path.mkdir(parents=True)
+        print(f'The directory "./{str(directory_path)}" was created.')
+    else:
+        print(f'The directory "./{str(directory_path)}" already exists.')
 
-        repo_name.append(repo["name"])
-        branch_name.append(repo["default_branch"])
+    repos = get_organization_repos()
 
-    for repo, branch in zip(repo_name, branch_name):
-        print(repo)
-        data = github_api_request(
-            f"/repos/{org}/{repo}/branches/{branch}/protection"
-        )
+    # for repo in data:
+    for repo in repos:
+        repo_name = repo["name"]
+        file_name = repo_name + ".json"
+        full_data_file_name = repo_name + "_full_data.json"
 
-        file_name = f"{repo}-{branch}-protection" + ".json"
-        file_path = f"./repos/{file_name}"
-        with open(file_path, "w") as f:
-            json.dump(data, f, indent=4)
+        # Query the /repos/{owner}/{repo} endpoint
+        repo_data = github_api_request(f"/repos/{org}/{repo_name}")
 
-    # write_repo_info_to_file(repo, file_path)
+        # Extract the 'allow_merge_commit' setting from the response
+        # allow_merge_commit = repo_data["allow_merge_commit"]
 
+        # Print the 'allow_merge_commit' setting
+        # print(f"Allow Merge Commit: {allow_merge_commit}")
+
+        # Write the 'allow_merge_commit' setting to the repository JSON file
+        # repo["allow_merge_commit"] = allow_merge_commit
+
+        with open(f"{str(directory_path)}/{full_data_file_name}", "w") as f:
+            json.dump(repo_data, f, indent=4)
+
+        # Loop through each repository and extract the relevant information
+        # for repo in repos:
+        repo_info = {
+            "name": repo["name"],
+            "description": repo["description"],
+            "homepage_url": repo["homepage"],
+            "private": repo["private"],
+            "visibility": repo["visibility"],
+            "has_issues": repo["has_issues"],
+            "has_discussions": repo["has_discussions"],
+            "has_projects": repo["has_projects"],
+            "has_wiki": repo["has_wiki"],
+            "is_template": repo["is_template"],
+            "has_downloads": repo["has_downloads"],
+            "archived": repo["archived"],
+            # "allow_merge_commit": repo["allow_merge_commit"],
+            # "allow_squash_merge": repo["allow_squash_merge"],
+            # "allow_rebase_merge": repo["allow_rebase_merge"],
+            # "delete_branch_on_merge": repo["delete_branch_on_merge"],
+        }
+        with open(f"{str(directory_path)}/{file_name}", "w") as f:
+            json.dump(repo_info, f, indent=4)
+
+
+# def get_repo_info():
+#     """
+#     Queries all GitHub repositories belonging to a specific organization for
+#     information and writes the repository information to individual JSON files,
+#     where each file name is the name of the repository.
+#     """
+#     data = github_api_request(f"/orgs/{org}/repos")
+
+#     repo_name = []
+
+#     for repo in data:
+#         file_name = repo["name"] + ".json"
+#         file_path = f"{file_name}"
+#         with open(file_path, "w") as f:
+#             json.dump(repo, f, indent=4)
+
+#         repo_name.append(repo["name"])
+
+#         print(json.dumps(data, indent=4))
+
+# for repo, branch in zip(repo_name, branch_name):
+#     print(repo)
+#     data = github_api_request(
+#         f"/repos/{org}/{repo}/branches/{branch}/protection"
+#     )
+
+#     file_name = f"{repo}-{branch}-protection" + ".json"
+#     file_path = f"{file_name}"
+#     with open(file_path, "w") as f:
+#         json.dump(data, f, indent=4)
+
+# write_repo_info_to_file(repo, file_path)
 
 #    # Loop through each repository and extract the relevant information
-#    for repo in data:
-#        repo_info = {
-#            "name": repo["name"],
-#            "description": repo["description"],
-#            "homepage_url": repo["homepage"],
-#            "private": repo["private"],
-#            "has_issues": repo["has_issues"],
-#            "has_wiki": repo["has_wiki"],
-#            "has_projects": repo["has_projects"],
-#            # "allow_merge_commit": repo["allow_merge_commit"],
-#            # "allow_squash_merge": repo["allow_squash_merge"],
-#            # "allow_rebase_merge": repo["allow_rebase_merge"],
-#            # "delete_branch_on_merge": repo["delete_branch_on_merge"],
-#            "archived": repo["archived"],
-#        }
-#
-#        # Write the repository information to a JSON file
-#        file_name = repo_info["name"] + ".json"
-#        file_path = f"./repos/{file_name}"
-#        write_repo_info_to_file(repo_info, file_path)
+# for repo in data:
+#     repo_info = {
+#         "name": repo["name"],
+#         "description": repo["description"],
+#         "homepage_url": repo["homepage"],
+#         "private": repo["private"],
+#         "visibility": repo["visibility"],
+#         "has_issues": repo["has_issues"],
+#         "has_discussions": repo["has_discussions"],
+#         "has_projects": repo["has_projects"],
+#         "has_wiki": repo["has_wiki"],
+#         "is_template": repo["is_template"],
+#         "has_downloads": repo["has_downloads"],
+#         "archived": repo["archived"],
+#         # "allow_merge_commit": repo["allow_merge_commit"],
+#         # "allow_squash_merge": repo["allow_squash_merge"],
+#         # "allow_rebase_merge": repo["allow_rebase_merge"],
+#         # "delete_branch_on_merge": repo["delete_branch_on_merge"],
+#     }
+
+#     # Write the repository information to a JSON file
 
 
 def get_organization_repos():
@@ -413,7 +478,6 @@ def github_api_request(endpoint: str) -> list:
 
 
 if __name__ == "__main__":
-
     try:
         apikey = os.environ["GITHUB_TOKEN"]
         auth = "Bearer " + apikey
@@ -434,7 +498,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|repo-team-collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-team-collab|all]"
         )
         sys.exit(1)
 
@@ -444,10 +508,8 @@ if __name__ == "__main__":
         get_teams()
     elif sys.argv[1] == "team-membership":
         get_team_membership()
-    # elif sys.argv[1] == "repos":
-    # get_repo_info()
-    # elif sys.argv[1] == "repo-collab":
-    # get_collaborators()
+    elif sys.argv[1] == "repos":
+        get_repo_info()
     elif sys.argv[1] == "repo-team-collab":
         get_collaborators_and_teams()
     elif sys.argv[1] == "all":
