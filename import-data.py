@@ -4,8 +4,6 @@ import urllib3
 import sys
 import pathlib
 
-# from pathlib import Path
-
 
 def get_members() -> None:
     """
@@ -170,21 +168,12 @@ def get_team_membership_files() -> None:
     print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
-def write_repo_info_to_file(repo_info, file_path) -> None:
-    """
-    Writes repository information to a JSON file.
-    """
-    with open(file_path, "w") as f:
-        json.dump(repo_info, f, indent=4)
-
-
 def get_repo_info():
     """
     Queries all GitHub repositories belonging to a specific organization for
     information and writes the repository information to individual JSON files,
     where each file name is the name of the repository.
     """
-    # data = github_api_request(f"/orgs/{org}/repos")
 
     directory_path = pathlib.Path("repos")
 
@@ -205,97 +194,58 @@ def get_repo_info():
         # Query the /repos/{owner}/{repo} endpoint
         repo_data = github_api_request(f"/repos/{org}/{repo_name}")
 
-        # Extract the 'allow_merge_commit' setting from the response
-        # allow_merge_commit = repo_data["allow_merge_commit"]
-
-        # Print the 'allow_merge_commit' setting
-        # print(f"Allow Merge Commit: {allow_merge_commit}")
-
-        # Write the 'allow_merge_commit' setting to the repository JSON file
-        # repo["allow_merge_commit"] = allow_merge_commit
-
         with open(f"{str(directory_path)}/{full_data_file_name}", "w") as f:
             json.dump(repo_data, f, indent=4)
 
         # Loop through each repository and extract the relevant information
-        # for repo in repos:
+        # for repo in repo_data:
         repo_info = {
-            "name": repo["name"],
-            "description": repo["description"],
-            "homepage_url": repo["homepage"],
-            "private": repo["private"],
-            "visibility": repo["visibility"],
-            "has_issues": repo["has_issues"],
-            "has_discussions": repo["has_discussions"],
-            "has_projects": repo["has_projects"],
-            "has_wiki": repo["has_wiki"],
-            "is_template": repo["is_template"],
-            "has_downloads": repo["has_downloads"],
-            "archived": repo["archived"],
-            # "allow_merge_commit": repo["allow_merge_commit"],
-            # "allow_squash_merge": repo["allow_squash_merge"],
-            # "allow_rebase_merge": repo["allow_rebase_merge"],
-            # "delete_branch_on_merge": repo["delete_branch_on_merge"],
+            "name": repo_data["name"],
+            "description": repo_data["description"],
+            "homepage_url": repo_data["homepage"],
+            "private": repo_data["private"],
+            "visibility": repo_data["visibility"],
+            "has_issues": repo_data["has_issues"],
+            "has_discussions": repo_data["has_discussions"],
+            "has_projects": repo_data["has_projects"],
+            "has_wiki": repo_data["has_wiki"],
+            "is_template": repo_data["is_template"],
+            "allow_merge_commit": repo_data["allow_merge_commit"],
+            "allow_squash_merge": repo_data["allow_squash_merge"],
+            "allow_rebase_merge": repo_data["allow_rebase_merge"],
+            "allow_auto_merge": repo_data["allow_auto_merge"],
+            "squash_merge_commit_title": repo_data[
+                "squash_merge_commit_title"
+            ],
+            "squash_merge_commit_message": repo_data[
+                "squash_merge_commit_message"
+            ],
+            "merge_commit_title": repo_data["merge_commit_title"],
+            "merge_commit_message": repo_data["merge_commit_message"],
+            "delete_branch_on_merge": repo_data["delete_branch_on_merge"],
+            "has_downloads": repo_data["has_downloads"],
+            # "auto_init": repo_data["auto_init"],
+            # "gitignore_template": repo_data["gitignore_template"],
+            # "license_template": repo_data["license_template"],
+            "default_branch": repo_data["default_branch"],
+            "archived": repo_data["archived"],
+            # "archive_on_destroy": repo_data["archive_on_destroy"],
+            # "pages:": repo_data["pages"],
+            "security_and_analysis": repo_data.get(
+                "security_and_analysis", {}
+            ),
+            "topics": repo_data.get("topics", []),
+            # "template": repo_data.get("template", {}),
+            "vulnerability_alerts": repo_data.get("vulnerability_alerts"),
+            # "ignore_vulnerability_alerts_during_read": repo_data.get(
+            # "ignore_vulnerability_alerts_during_read"
+            # ),
+            "allow_update_branch": repo_data["allow_update_branch"],
         }
         with open(f"{str(directory_path)}/{file_name}", "w") as f:
             json.dump(repo_info, f, indent=4)
 
-
-# def get_repo_info():
-#     """
-#     Queries all GitHub repositories belonging to a specific organization for
-#     information and writes the repository information to individual JSON files,
-#     where each file name is the name of the repository.
-#     """
-#     data = github_api_request(f"/orgs/{org}/repos")
-
-#     repo_name = []
-
-#     for repo in data:
-#         file_name = repo["name"] + ".json"
-#         file_path = f"{file_name}"
-#         with open(file_path, "w") as f:
-#             json.dump(repo, f, indent=4)
-
-#         repo_name.append(repo["name"])
-
-#         print(json.dumps(data, indent=4))
-
-# for repo, branch in zip(repo_name, branch_name):
-#     print(repo)
-#     data = github_api_request(
-#         f"/repos/{org}/{repo}/branches/{branch}/protection"
-#     )
-
-#     file_name = f"{repo}-{branch}-protection" + ".json"
-#     file_path = f"{file_name}"
-#     with open(file_path, "w") as f:
-#         json.dump(data, f, indent=4)
-
-# write_repo_info_to_file(repo, file_path)
-
-#    # Loop through each repository and extract the relevant information
-# for repo in data:
-#     repo_info = {
-#         "name": repo["name"],
-#         "description": repo["description"],
-#         "homepage_url": repo["homepage"],
-#         "private": repo["private"],
-#         "visibility": repo["visibility"],
-#         "has_issues": repo["has_issues"],
-#         "has_discussions": repo["has_discussions"],
-#         "has_projects": repo["has_projects"],
-#         "has_wiki": repo["has_wiki"],
-#         "is_template": repo["is_template"],
-#         "has_downloads": repo["has_downloads"],
-#         "archived": repo["archived"],
-#         # "allow_merge_commit": repo["allow_merge_commit"],
-#         # "allow_squash_merge": repo["allow_squash_merge"],
-#         # "allow_rebase_merge": repo["allow_rebase_merge"],
-#         # "delete_branch_on_merge": repo["delete_branch_on_merge"],
-#     }
-
-#     # Write the repository information to a JSON file
+    print(f"\nRepository data is written to {directory_path}.\n")
 
 
 def get_organization_repos():
@@ -397,7 +347,8 @@ def get_collaborators_and_teams():
             permissions = collaborator.get("permissions", {})
             highest_permission = get_highest_permission(permissions)
 
-            # Check if the collaborator is part of a team and if their permissions differ
+            # Check if the collaborator is part of a team
+            # and if their permissions differ
             is_in_team = False
             for team, info in team_info.items():
                 if collaborator.get("name") in info["members"]:
@@ -411,7 +362,8 @@ def get_collaborators_and_teams():
                         )
                     break
 
-            # If the collaborator is not part of any team, add them to the JSON output
+            # If the collaborator is not part of any team,
+            # add them to the JSON output
             if not is_in_team:
                 repo_entry["users"].append(
                     {
