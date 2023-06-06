@@ -102,7 +102,7 @@ def get_team_membership() -> None:
                 {"username": member["login"], "role": team_member_role}
             )
 
-    TEAM_MEMBERSHIP_JSON = "team-memberships.json"
+    TEAM_MEMBERSHIP_JSON = "team-membership.json"
     with open(TEAM_MEMBERSHIP_JSON, "w") as f:
         json.dump(teams, f, indent=4)
 

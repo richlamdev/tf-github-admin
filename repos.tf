@@ -1,11 +1,12 @@
 variable "json_dir" {
   description = "The directory where your JSON files are located"
-  default     = "./repos"
+  default     = "./repos/"
 }
 
 data "local_file" "json_files" {
   for_each = fileset(var.json_dir, "*.json")
-  filename = each.value
+  filename = "${var.json_dir}/${each.value}"
+  #filename = each.value
 }
 
 resource "github_repository" "this" {

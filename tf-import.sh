@@ -36,11 +36,11 @@ function import_teams() {
 
 
 function import_team_membership() {
-  team_memberships_file="team_memberships.json"
+  team_memberships_file="team-membership.json"
 
-  for team_id in $(jq -r '.[].id' team_memberships.json); do
-    for username in $(jq -r ".[] | select(.id == $team_id) | .members[].username" team_memberships.json); do
-      terraform import "github_team_membership.team_memberships[\"$team_id-$username\"]" "$team_id:$username"
+  for team_id in $(jq -r '.[].id' team-membership.json); do
+    for username in $(jq -r ".[] | select(.id == $team_id) | .members[].username" team-membership.json); do
+      terraform import "github_team_membership.team_membership[\"$team_id-$username\"]" "$team_id:$username"
     done
   done
 }

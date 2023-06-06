@@ -1,6 +1,6 @@
 locals {
   team_members = flatten([
-    for team_member in jsondecode(file("team_memberships.json")) :
+    for team_member in jsondecode(file("team-membership.json")) :
       [
 	for member in team_member.members :
 	  {
@@ -14,7 +14,7 @@ locals {
   ])
 }
 
-resource "github_team_membership" "team_memberships" {
+resource "github_team_membership" "team_membership" {
   for_each = { for member in local.team_members : "${member.team_id}-${member.username}" => member }
 
   team_id   = each.value.team_id
