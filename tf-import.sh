@@ -56,11 +56,11 @@ function import_repo_collaborator() {
 }
 
 
-function import_repos {
-  JSON_DIR="./repos"
-  for FILE in $(ls $JSON_DIR/*.json); do
-    REPO_NAME=$(jq -r .name $FILE)
-    terraform import github_repository.this[\"$REPO_NAME\"] $REPO_NAME
+function import_repos() {
+  for file in repos/*.json
+  do
+    repo=$(jq -r .name "$file")
+    terraform import github_repository.repo[\"$repo\"] "$repo"
   done
 }
 
