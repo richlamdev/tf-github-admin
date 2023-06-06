@@ -47,12 +47,21 @@ function import_team_membership() {
 
 
 function import_repo_collaborator() {
-    FILE="repo-collaborators.json"
-    REPO_NAME=$(jq -r 'keys[]' $FILE)
-    for repo in $REPO_NAME
-    do
-        terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
-    done
+  FILE="repo-collaborators.json"
+  REPO_NAME=$(jq -r 'keys[]' $FILE)
+  for repo in $REPO_NAME
+  do
+      terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
+  done
+}
+
+
+function import_repos {
+  JSON_DIR="./repos"
+  for FILE in $(ls $JSON_DIR/*.json); do
+    REPO_NAME=$(jq -r .name $FILE)
+    terraform import github_repository.this[\"$REPO_NAME\"] $REPO_NAME
+  done
 }
 
 
@@ -71,11 +80,15 @@ function main {
     repo-collab)
       import_repo_collaborator
       ;;
+    repos)
+      import_repos
+      ;;
     all)
       import_members
       import_teams
       import_team_membership
       import_repo_collaborator
+      import_repos
       ;;
     *)
       printf "\n%s" \

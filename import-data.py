@@ -194,8 +194,8 @@ def get_repo_info():
         # Query the /repos/{owner}/{repo} endpoint
         repo_data = github_api_request(f"/repos/{org}/{repo_name}")
 
-        with open(f"{str(directory_path)}/{full_data_file_name}", "w") as f:
-            json.dump(repo_data, f, indent=4)
+        # with open(f"{str(directory_path)}/{full_data_file_name}", "w") as f:
+        # json.dump(repo_data, f, indent=4)
 
         # Loop through each repository and extract the relevant information
         # for repo in repo_data:
