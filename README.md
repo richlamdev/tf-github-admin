@@ -51,7 +51,7 @@ This script is located at the root of the repo folder.
 import-data.py scrapes from a Github organization to prepare for mass Terraform
 importation of present state deployed state.
 
-Execute python3 import-data.py to view options for data to scrape.
+Execute `python3 import-data.py` to view options for data to scrape.
 IE: members, teams, team-membership, repositories, respository options etc.
 
 Data output is exported to JSON and is located at the root folder.  This data
@@ -94,14 +94,6 @@ for adding and removing individual collaborators (users).
 Meanwhile, the github_repository_collaborators resource allows for the addition
 and removal of multiple collaborators (users) and/or teams.
 
-The challenge in dynamically creating github_repository_collaborators is to
-ensure there is unique identifier for each resource created.  Naturally, using
-a member or a team name would be a logical choice.  However, there are
-situations in which there may be no member and/or a team as a collaborator
-for a repository.  As a result, dynamically creating a
-github_repository_collaborators resource can be problematic. (or at a minimum,
-challenging using terraform/HCL for implementation)
-
 
 ### github_repository_collaborators implementation
 
@@ -116,26 +108,7 @@ repository collaborators with the greater set of permissions.
 
 4) If a member collaborator is not a member of a team that is collaborator
 on the same repo, however is a individual repository collaborator, then add
-the member to the repository collaborators with the set of permissions
-assigned.
-
-
-Create different types of dynmamic resources based on the above criteria:
-
-
-5) If there are no team collaborators, create a resource based on a member name.
-IE:
-github_repository_collaborators.collaborator["repo-name-member-collaborator"]
-
-_Note, there may be multiple usernames when creating this resource, but only
-one name will be utililzed in naming this resource._
-
-6) If there are no member collaborators, create a resource based on a team name.
-IE:
-github_repository_collaborators.collaborator["repo-name-team-collaborator"]
-
-_Note, there may be multiple teams when creating this resource, but only
-one name will be utililzed in naming this resource._
+the member to the repository collaborators with the permissions assigned.
 
 
 ## Deployment Diagram
