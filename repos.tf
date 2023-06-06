@@ -31,10 +31,10 @@ resource "github_repository" "repo" {
   has_downloads           = each.value.has_downloads
   archived                = each.value.archived
   topics                  = each.value.topics
-  vulnerability_alerts    = each.value.vulnerability_alerts
+  #vulnerability_alerts    = each.value.vulnerability_alerts
   allow_update_branch     = each.value.allow_update_branch
   lifecycle {
-    ignore_changes = [pages,template]
+    ignore_changes = [pages,template,vulnerability_alerts]
   }
 }
 
