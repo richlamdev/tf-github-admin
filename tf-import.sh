@@ -36,23 +36,32 @@ function import_teams() {
 
 
 function import_team_membership() {
-  team_memberships_file="team_memberships.json"
+  team_memberships_file="team-membership.json"
 
-  for team_id in $(jq -r '.[].id' team_memberships.json); do
-    for username in $(jq -r ".[] | select(.id == $team_id) | .members[].username" team_memberships.json); do
-      terraform import "github_team_membership.team_memberships[\"$team_id-$username\"]" "$team_id:$username"
+  for team_id in $(jq -r '.[].id' team-membership.json); do
+    for username in $(jq -r ".[] | select(.id == $team_id) | .members[].username" team-membership.json); do
+      terraform import "github_team_membership.team_membership[\"$team_id-$username\"]" "$team_id:$username"
     done
   done
 }
 
 
 function import_repo_collaborator() {
-    FILE="repo-collaborators.json"
-    REPO_NAME=$(jq -r 'keys[]' $FILE)
-    for repo in $REPO_NAME
-    do
-        terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
-    done
+  FILE="repo-collaborators.json"
+  REPO_NAME=$(jq -r 'keys[]' $FILE)
+  for repo in $REPO_NAME
+  do
+      terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
+  done
+}
+
+
+function import_repos() {
+  for file in repos/*.json
+  do
+    repo=$(jq -r .name "$file")
+    terraform import github_repository.repo[\"$repo\"] "$repo"
+  done
 }
 
 
@@ -71,11 +80,15 @@ function main {
     repo-collab)
       import_repo_collaborator
       ;;
+    repos)
+      import_repos
+      ;;
     all)
       import_members
       import_teams
       import_team_membership
       import_repo_collaborator
+      import_repos
       ;;
     *)
       printf "\n%s" \
