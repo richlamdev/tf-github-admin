@@ -4,7 +4,6 @@ locals {
   repositories = {
     for file in local.json_files :
     jsondecode(file(file)).name => jsondecode(file(file))
-    #file => jsondecode(file(file))
   }
 }
 
@@ -29,5 +28,8 @@ resource "github_repository" "repo" {
   has_downloads           = each.value.has_downloads
   #default_branch          = each.value.default_branch
   archived                = each.value.archived
+  lifecycle {
+    ignore_changes = [vulnerability_alerts]
+  }
 }
 
