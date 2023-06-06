@@ -231,7 +231,7 @@ def get_repo_info():
             "default_branch": repo_data["default_branch"],
             "archived": repo_data["archived"],
             # "archive_on_destroy": repo_data["archive_on_destroy"],
-            # "pages:": repo_data["pages"],
+            "pages:": repo_data.get("pages", {}),
             "security_and_analysis": repo_data.get(
                 "security_and_analysis", {}
             ),
@@ -246,7 +246,9 @@ def get_repo_info():
         with open(f"{str(directory_path)}/{file_name}", "w") as f:
             json.dump(repo_info, f, indent=4)
 
-    print(f"\nRepository data is written to {directory_path}.\n")
+    print(
+        f"\nRepository data is written to the directory ./{directory_path}.\n"
+    )
 
 
 def get_organization_repos():
