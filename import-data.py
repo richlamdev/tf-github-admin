@@ -168,6 +168,135 @@ def get_team_membership_files() -> None:
     print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
+def get_branch_protection():
+    """
+    Queries all GitHub repositories belonging to a specific organization for
+    information and writes the repository information to individual JSON files,
+    where each file name is the name of the repository.
+    """
+
+    directory_path = pathlib.Path("branch-protection")
+
+    if not directory_path.exists():
+        directory_path.mkdir(parents=True)
+        print(f'The directory "./{str(directory_path)}" was created.')
+    else:
+        print(f'The directory "./{str(directory_path)}" already exists.')
+
+    repos = get_organization_repos()
+
+    # for repo in data:
+    for repo in repos:
+        repo_name = repo["name"]
+        file_name = repo_name + ".json"
+        full_data_file_name = repo_name + "_full_data.json"
+
+        # Query the /repos/{owner}/{repo} endpoint
+        branches = github_api_request(f"/repos/{org}/{repo_name}/branches")
+
+        print()
+        print(f"Repo: {repo_name}")
+        print()
+
+        for branch in branches:
+            branch_name = branch["name"]
+            branch_protected = branch["protected"]
+
+            print(
+                f"Repo: {repo_name}, Branch: {branch_name}, Protected: {branch_protected}"
+            )
+
+            # response = http.request('GET', f'https://api.github.com/repos/{org}/{repo_name}/branches/{branch_name}/protection')
+            # protection_data = json.loads(response.data.decode('utf-8'))
+            protection_data = github_api_request(
+                f"/repos/{org}/{repo_name}/branches/{branch_name}/protection"
+            )
+
+            if "required_status_checks" in protection_data:
+                required_checks = protection_data["required_status_checks"]
+                print(f"Required status checks: {required_checks}")
+
+            if "enforce_admins" in protection_data:
+                enforce_admins = protection_data["enforce_admins"]["enabled"]
+                print(f"Enforce admins: {enforce_admins}")
+
+            if "required_pull_request_reviews" in protection_data:
+                pr_reviews = protection_data["required_pull_request_reviews"]
+                print(f"Required pull request reviews: {pr_reviews}")
+
+            if "restrictions" in protection_data:
+                restrictions = protection_data["restrictions"]
+                print(f"Restrictions: {restrictions}")
+
+            # Write the branch protection data to a JSON file
+            data = {
+                "repo_name": repo_name,
+                "branch_name": branch_name,
+                "branch_protected": branch_protected,
+                "protection_data": protection_data,
+            }
+            with open(directory_path / file_name, "w") as file:
+                json.dump(data, file, indent=4)
+
+        print("--------------------")
+
+        # below two lines in case you need to view all data from the api
+        # with open(f"full_data/{full_data_file_name}", "w") as f:
+        # json.dump(repo_data, f, indent=4)
+
+        # Loop through each repository and extract the relevant information
+        # for repo in repo_data:
+        # repo_info = {
+        #     "name": repo_data["name"],
+        #     "description": repo_data["description"],
+        #     "homepage_url": repo_data["homepage"],
+        #     "private": repo_data["private"],
+        #     "visibility": repo_data["visibility"],
+        #     "has_issues": repo_data["has_issues"],
+        #     "has_discussions": repo_data["has_discussions"],
+        #     "has_projects": repo_data["has_projects"],
+        #     "has_wiki": repo_data["has_wiki"],
+        #     "is_template": repo_data["is_template"],
+        #     "allow_merge_commit": repo_data["allow_merge_commit"],
+        #     "allow_squash_merge": repo_data["allow_squash_merge"],
+        #     "allow_rebase_merge": repo_data["allow_rebase_merge"],
+        #     "allow_auto_merge": repo_data["allow_auto_merge"],
+        #     "squash_merge_commit_title": repo_data[
+        #         "squash_merge_commit_title"
+        #     ],
+        #     "squash_merge_commit_message": repo_data[
+        #         "squash_merge_commit_message"
+        #     ],
+        #     "merge_commit_title": repo_data["merge_commit_title"],
+        #     "merge_commit_message": repo_data["merge_commit_message"],
+        #     "delete_branch_on_merge": repo_data["delete_branch_on_merge"],
+        #     "has_downloads": repo_data["has_downloads"],
+        #     # "auto_init": repo_data["auto_init"],
+        #     # "gitignore_template": repo_data["gitignore_template"],
+        #     # "license_template": repo_data["license_template"],
+        #     "default_branch": repo_data["default_branch"],
+        #     "archived": repo_data["archived"],
+        #     # "archive_on_destroy": repo_data["archive_on_destroy"],
+        #     "pages:": repo_data.get("pages", {}),
+        #     "security_and_analysis": repo_data.get(
+        #         "security_and_analysis", {}
+        #     ),
+        #     "topics": repo_data.get("topics", []),
+        #     # "template": repo_data.get("template", {}),
+        #     "vulnerability_alerts": repo_data.get("vulnerability_alerts"),
+        #     # "ignore_vulnerability_alerts_during_read": repo_data.get(
+        #     # "ignore_vulnerability_alerts_during_read"
+        #     # ),
+        #     "allow_update_branch": repo_data["allow_update_branch"],
+        # }
+        # with open(f"{str(directory_path)}/{file_name}", "w") as f:
+        #     json.dump(repo_info, f, indent=4)
+
+    print(
+        f"\nRepository data is written to the directory ./{directory_path}.\n"
+    )
+
+
 def get_repo_info():
     """
     Queries all GitHub repositories belonging to a specific organization for
@@ -467,6 +596,8 @@ if __name__ == "__main__":
         get_repo_info()
     elif sys.argv[1] == "repo-team-collab":
         get_collaborators_and_teams()
+    elif sys.argv[1] == "branch-protection":
+        get_branch_protection()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
