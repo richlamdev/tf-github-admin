@@ -191,52 +191,88 @@ def get_branch_protection():
         file_name = repo_name + ".json"
         full_data_file_name = repo_name + "_full_data.json"
 
-        # Query the /repos/{owner}/{repo} endpoint
-        branches = github_api_request(f"/repos/{org}/{repo_name}/branches")
+        # Make a GET request to fetch the repository information
+        # response = http.request(
+        #     "GET", f"https://api.github.com/repos/{org}/{repo_name}"
+        # )
+        # repository_info = json.loads(response.data.decode("utf-8"))
+        repository_info = github_api_request(f"/repos/{org}/{repo_name}")
+
+        # Determine the default branch of the repository
+        default_branch = repository_info["default_branch"]
+
+        # Make a GET request to fetch the branch protection settings for the default branch
+        # response = http.request(
+        #     "GET",
+        #     f"https://api.github.com/repos/{org}/{repo_name}/branches/{default_branch}/protection",
+        # )
+        # protection_data = json.loads(response.data.decode("utf-8"))
+        protection_data = github_api_request(
+            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
+        )
 
         print()
         print(f"Repo: {repo_name}")
+        print(f"Default Branch: {default_branch}")
         print()
 
-        for branch in branches:
-            branch_name = branch["name"]
-            branch_protected = branch["protected"]
+        with open(f"{directory_path}/{full_data_file_name}", "w") as file:
+            json.dump(protection_data, file, indent=4)
 
-            print(
-                f"Repo: {repo_name}, Branch: {branch_name}, Protected: {branch_protected}"
-            )
+        # Get the protection data using dict.get()
 
-            # response = http.request('GET', f'https://api.github.com/repos/{org}/{repo_name}/branches/{branch_name}/protection')
-            # protection_data = json.loads(response.data.decode('utf-8'))
-            protection_data = github_api_request(
-                f"/repos/{org}/{repo_name}/branches/{branch_name}/protection"
-            )
+        enforce_admins = protection_data.get("enforce_admins", {}).get(
+            "enabled"
+        )
+        # require_signed_commits = protection_data.get("require_signed_commits")
+        required_linear_history = protection_data.get(
+            "required_linear_history", {}
+        ).get("enabled", False)
+        require_conversation_resolution = protection_data.get(
+            "required_conversation_resolution", {}
+        ).get("enabled", False)
+        required_status_checks = protection_data.get(
+            "required_status_checks", {}
+        )
+        required_pull_request_reviews = protection_data.get(
+            "required_pull_request_reviews", {}
+        )
 
-            if "required_status_checks" in protection_data:
-                required_checks = protection_data["required_status_checks"]
-                print(f"Required status checks: {required_checks}")
+        restrictions = protection_data.get("restrictions", {})
 
-            if "enforce_admins" in protection_data:
-                enforce_admins = protection_data["enforce_admins"]["enabled"]
-                print(f"Enforce admins: {enforce_admins}")
+        # push_restrictions = protection_data.get("restrictions")
+        allows_deletions = protection_data.get("allow_deletions", {}).get(
+            "enabled", False
+        )
+        allows_force_pushes = protection_data.get(
+            "allow_force_pushes", {}
+        ).get("enabled", False)
+        blocks_creations = protection_data.get("block_creations", {}).get(
+            "enabled", False
+        )
+        lock_branch = protection_data.get("lock_branch", {}).get(
+            "enabled", False
+        )
 
-            if "required_pull_request_reviews" in protection_data:
-                pr_reviews = protection_data["required_pull_request_reviews"]
-                print(f"Required pull request reviews: {pr_reviews}")
+        # Store the branch protection data in the repository data dictionary
+        repo_data = {
+            "repository_id": repo_name,
+            "pattern": default_branch,
+            "enforce_admins": enforce_admins,
+            "required_linear_history": required_linear_history,
+            "require_conversation_resolution": require_conversation_resolution,
+            "required_status_checks": required_status_checks,
+            "required_pull_request_reviews": required_pull_request_reviews,
+            "allows_deletions": allows_deletions,
+            "allows_force_pushes": allows_force_pushes,
+            "blocks_creations": blocks_creations,
+            "lock_branch": lock_branch,
+            "restrictions": restrictions,
+        }
 
-            if "restrictions" in protection_data:
-                restrictions = protection_data["restrictions"]
-                print(f"Restrictions: {restrictions}")
-
-            # Write the branch protection data to a JSON file
-            data = {
-                "repo_name": repo_name,
-                "branch_name": branch_name,
-                "branch_protected": branch_protected,
-                "protection_data": protection_data,
-            }
-            with open(directory_path / file_name, "w") as file:
-                json.dump(data, file, indent=4)
+        # Write the repository data to a JSON file
+        with open(directory_path / file_name, "w") as file:
+            json.dump(repo_data, file, indent=4)
 
         print("--------------------")
 
