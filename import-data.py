@@ -185,17 +185,22 @@ def get_branch_protection():
 
     repos = get_organization_repos()
 
-    # for repo in data:
     for repo in repos:
         repo_name = repo["name"]
         file_name = repo_name + ".json"
         full_data_file_name = repo_name + "_full_data.json"
 
-        repository_info = github_api_request(f"/repos/{org}/{repo_name}")
-
         # Determine the default branch of the repository
+        repository_info = github_api_request(f"/repos/{org}/{repo_name}")
         default_branch = repository_info["default_branch"]
 
+        # Determine if the repository requires signatures
+        signatures_data = github_api_request(
+            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
+        )
+        require_signed_commits = signatures_data.get("enabled", False)
+
+        # Determine branch protection rules
         protection_data = github_api_request(
             f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
         )
@@ -209,14 +214,9 @@ def get_branch_protection():
             json.dump(protection_data, file, indent=4)
 
         # Get the protection data using dict.get()
-
         enforce_admins = protection_data.get("enforce_admins", {}).get(
             "enabled"
         )
-        # require_signed_commits = protection_data.get("require_signed_commits")
-        required_linear_history = protection_data.get(
-            "required_linear_history", {}
-        ).get("enabled", False)
         require_conversation_resolution = protection_data.get(
             "required_conversation_resolution", {}
         ).get("enabled", False)
@@ -226,36 +226,17 @@ def get_branch_protection():
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
-
         restrictions = protection_data.get("restrictions", {})
-
-        # push_restrictions = protection_data.get("restrictions")
-        allows_deletions = protection_data.get("allow_deletions", {}).get(
-            "enabled", False
-        )
-        allows_force_pushes = protection_data.get(
-            "allow_force_pushes", {}
-        ).get("enabled", False)
-        blocks_creations = protection_data.get("block_creations", {}).get(
-            "enabled", False
-        )
-        lock_branch = protection_data.get("lock_branch", {}).get(
-            "enabled", False
-        )
 
         # Store the branch protection data in the repository data dictionary
         repo_data = {
-            "repository_id": repo_name,
-            "pattern": default_branch,
+            "repository": repo_name,
+            "branch": default_branch,
             "enforce_admins": enforce_admins,
-            "required_linear_history": required_linear_history,
+            "require_signed_commits": require_signed_commits,
             "require_conversation_resolution": require_conversation_resolution,
             "required_status_checks": required_status_checks,
             "required_pull_request_reviews": required_pull_request_reviews,
-            "allows_deletions": allows_deletions,
-            "allows_force_pushes": allows_force_pushes,
-            "blocks_creations": blocks_creations,
-            "lock_branch": lock_branch,
             "restrictions": restrictions,
         }
 
@@ -291,12 +272,12 @@ def get_repo_info():
     for repo in repos:
         repo_name = repo["name"]
         file_name = repo_name + ".json"
-        full_data_file_name = repo_name + "_full_data.json"
 
         # Query the /repos/{owner}/{repo} endpoint
         repo_data = github_api_request(f"/repos/{org}/{repo_name}")
 
-        # below two lines in case you need to view all data from the api
+        # following three lines in case you need to view all data from the api
+        # full_data_file_name = repo_name + "_full_data.json"
         # with open(f"full_data/{full_data_file_name}", "w") as f:
         # json.dump(repo_data, f, indent=4)
 
