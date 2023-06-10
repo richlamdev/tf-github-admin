@@ -1,17 +1,10 @@
-# variable "json_folder" {
-#   description = "Folder containing the JSON files"
-#   type        = string
-#   default     = "./branch-protection"
-# }
-
 locals {
   branch_protection_json_files = fileset(path.module, "branch-protection/*.json")
 }
 
 resource "github_branch_protection_v3" "protection" {
-  for_each = { for file in local.branch_protection_json_files : file => jsondecode(file(file)) }
-  #for_each = { for file in local.branch_protection_json_files :
-  #jsondecode(file(file)).repository => jsondecode(file(file)) }
+  for_each = { for file in local.branch_protection_json_files :
+  jsondecode(file(file)).repository => jsondecode(file(file)) }
 
   repository                      = each.value.repository
   branch                          = each.value.branch
@@ -38,7 +31,6 @@ resource "github_branch_protection_v3" "protection" {
       teams = contains(keys(each.value.required_pull_request_reviews.bypass_pull_request_allowances), "teams") ? each.value.required_pull_request_reviews.bypass_pull_request_allowances.teams : []
     }
   }
-
 
   restrictions {
     users = contains(keys(each.value.restrictions), "users") ? each.value.restrictions.users : []
