@@ -230,10 +230,6 @@ def get_branch_protection():
             "required_pull_request_reviews", {}
         )
 
-        dismiss_stale_reviews = pull_request_reviews.get(
-            "dismiss_stale_reviews", False
-        )
-
         dismiss_user_list = pull_request_reviews.get(
             "dismissal_restrictions", {}
         ).get("users", [])
@@ -243,10 +239,18 @@ def get_branch_protection():
         ).get("teams", [])
 
         dismissal_users = [user["login"] for user in dismiss_user_list]
-        dismissal_teams = [team["name"] for team in dismiss_team_list]
+        dismissal_teams = [team["slug"] for team in dismiss_team_list]
 
         print(dismissal_users)
         print(dismissal_teams)
+
+        pull_request_allowances = pull_request_reviews.get(
+            bypass_pull_request_allowances, {}
+        ).get("users", [])
+
+        bypass_pull_request_allowances = [
+            user["login"] for user in pull_request_allowances
+        ]
 
         restrictions = protection_data.get("restrictions", {})
 
