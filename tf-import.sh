@@ -66,16 +66,31 @@ function import_repos() {
 
 
 function import_branch_protection() {
-    for file in branch-protection/*.json
-    do
-        filename=$(basename -- "$file")
-        echo $filename
-        resource_name="github_branch_protection_v3.protection[\"${filename}\"]"
-        #import_command="terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})"
-        #terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})
-        #echo ${import_command}
-    done
+  for file in branch-protection/*.json
+  do
+    repo=$(jq -r .repository "$file")
+    branch=$(jq -r .branch "$file")
+    #filename=$(basename "$file" .json)
+    echo $repo
+    echo $branch
+    terraform import "github_branch_protection_v3.protection[\"${repo}\"]" "${repo}:${branch}"
+    #import_command="terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})"
+    #terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})
+    #echo ${import_command}
+  done
 }
+
+#function import_branch_protection() {
+#    for file in branch-protection/*.json
+#    do
+#        filename=$(basename -- "$file")
+#        echo $filename
+#        resource_name="github_branch_protection_v3.protection[\"${filename}\"]"
+#        #import_command="terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})"
+#        #terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})
+#        #echo ${import_command}
+#    done
+#}
 
 
 function main {
