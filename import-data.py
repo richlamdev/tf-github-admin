@@ -217,24 +217,29 @@ def get_branch_protection():
         enforce_admins = protection_data.get("enforce_admins", {}).get(
             "enabled"
         )
+
         require_conversation_resolution = protection_data.get(
             "required_conversation_resolution", {}
         ).get("enabled", False)
+
+        # required_status_checks dictionary
         required_status_checks = protection_data.get(
             "required_status_checks", {}
         )
-        # required_pull_request_reviews = protection_data.get(
-        # "required_pull_request_reviews", {}
-        # )
-        pull_request_reviews = protection_data.get(
+
+        ### required_pull_request_reviews dictionary ###
+        required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
+        # pull_request_reviews = protection_data.get(
+        #     "required_pull_request_reviews", {}
+        # )
 
-        dismiss_user_list = pull_request_reviews.get(
+        dismiss_user_list = required_pull_request_reviews.get(
             "dismissal_restrictions", {}
         ).get("users", [])
 
-        dismiss_team_list = pull_request_reviews.get(
+        dismiss_team_list = required_pull_request_reviews.get(
             "dismissal_restrictions", {}
         ).get("teams", [])
 
@@ -244,15 +249,39 @@ def get_branch_protection():
         print(dismissal_users)
         print(dismissal_teams)
 
-        pull_request_allowances = pull_request_reviews.get(
-            bypass_pull_request_allowances, {}
+        pull_request_allowances_users = required_pull_request_reviews.get(
+            "bypass_pull_request_allowances", {}
         ).get("users", [])
+        pull_request_allowances_teams = required_pull_request_reviews.get(
+            "bypass_pull_request_allowances", {}
+        ).get("teams", [])
 
-        bypass_pull_request_allowances = [
-            user["login"] for user in pull_request_allowances
+        bypass_pull_request_allowances_users = [
+            user["login"] for user in pull_request_allowances_users
+        ]
+        bypass_pull_request_allowances_teams = [
+            team["slug"] for team in pull_request_allowances_teams
         ]
 
+        print(
+            f"bypass_pull_request_alllowances_users: {bypass_pull_request_allowances_users}"
+        )
+        print(
+            f"bypass_pull_request_alllowances_teams: {bypass_pull_request_allowances_teams}"
+        )
+        ### required_pull_request_reviews dictionary ###
+
+        ### restrictions dictionary ###
         restrictions = protection_data.get("restrictions", {})
+
+        restrict_users = restrictions.get("users", [])
+        restrict_teams = restrictions.get("teams", [])
+
+        restrictions_users = [user["login"] for user in restrict_users]
+        restrictions_teams = [team["slug"] for team in restrict_teams]
+
+        print(f"restrictions_users: {restrictions_users}")
+        print(f"restrictions_teams: {restrictions_teams}")
 
         # Store the branch protection data in the repository data dictionary
         repo_data = {
@@ -262,7 +291,7 @@ def get_branch_protection():
             "require_signed_commits": require_signed_commits,
             "require_conversation_resolution": require_conversation_resolution,
             "required_status_checks": required_status_checks,
-            # "required_pull_request_reviews": required_pull_request_reviews,
+            "required_pull_request_reviews": required_pull_request_reviews,
             "restrictions": restrictions,
         }
 
