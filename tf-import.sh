@@ -127,7 +127,7 @@ function main {
         "Designate Github Organization by environment variable GITHUB_ORG" \
         "Eg. export GITHUB_ORG=\"<organization>\"" \
         "" \
-        "Usage: $0 [members|teams|team-membership|repos|repo-collab|all]" \
+        "Usage: $0 [members|teams|team-membership|repos|repo-collab|branch-protection|all]" \
         "" \
         ""
       exit 1

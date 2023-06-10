@@ -266,8 +266,7 @@ def get_branch_protection():
         ]
 
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"]
-        # required_pull_request_reviews["bypass_pull_request_allowances"]["teams"]
-        # as lists
+        # required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
 
         required_pull_request_reviews["bypass_pull_request_allowances"][
             "users"
