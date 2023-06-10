@@ -231,9 +231,6 @@ def get_branch_protection():
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
-        # pull_request_reviews = protection_data.get(
-        #     "required_pull_request_reviews", {}
-        # )
 
         dismiss_user_list = required_pull_request_reviews.get(
             "dismissal_restrictions", {}
@@ -249,6 +246,11 @@ def get_branch_protection():
         print(dismissal_users)
         print(dismissal_teams)
 
+        required_pull_request_reviews["dismissal_users"] = dismissal_users
+        required_pull_request_reviews["dismissal_teams"] = dismissal_teams
+
+        required_pull_request_reviews["bypass_pull_request_allowances"] = {}
+
         pull_request_allowances_users = required_pull_request_reviews.get(
             "bypass_pull_request_allowances", {}
         ).get("users", [])
@@ -263,6 +265,17 @@ def get_branch_protection():
             team["slug"] for team in pull_request_allowances_teams
         ]
 
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"]
+        # required_pull_request_reviews["bypass_pull_request_allowances"]["teams"]
+        # as lists
+
+        required_pull_request_reviews["bypass_pull_request_allowances"][
+            "users"
+        ] = bypass_pull_request_allowances_users
+        required_pull_request_reviews["bypass_pull_request_allowances"][
+            "teams"
+        ] = bypass_pull_request_allowances_teams
+
         print(
             f"bypass_pull_request_alllowances_users: {bypass_pull_request_allowances_users}"
         )
@@ -273,12 +286,14 @@ def get_branch_protection():
 
         ### restrictions dictionary ###
         restrictions = protection_data.get("restrictions", {})
-
         restrict_users = restrictions.get("users", [])
         restrict_teams = restrictions.get("teams", [])
-
         restrictions_users = [user["login"] for user in restrict_users]
         restrictions_teams = [team["slug"] for team in restrict_teams]
+
+        # rewrite restrictions["users"] and restrictions["teams"] as a list only
+        restrictions["users"] = restrictions_users
+        restrictions["teams"] = restrictions_teams
 
         print(f"restrictions_users: {restrictions_users}")
         print(f"restrictions_teams: {restrictions_teams}")

@@ -65,6 +65,19 @@ function import_repos() {
 }
 
 
+function import_branch_protection() {
+    for file in branch-protection/*.json
+    do
+        filename=$(basename -- "$file")
+        echo $filename
+        resource_name="github_branch_protection_v3.protection[\"${filename}\"]"
+        #import_command="terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})"
+        #terraform import ${resource_name} $(jq -r .repository ${file}):$(jq -r .branch ${file})
+        #echo ${import_command}
+    done
+}
+
+
 function main {
 
   case "$1" in
@@ -82,6 +95,9 @@ function main {
       ;;
     repos)
       import_repos
+      ;;
+    branch-protection)
+      import_branch_protection
       ;;
     all)
       import_members
