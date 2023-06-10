@@ -65,6 +65,16 @@ function import_repos() {
 }
 
 
+function import_branch_protection() {
+  for file in branch-protection/*.json
+  do
+    repo=$(jq -r .repository "$file")
+    branch=$(jq -r .branch "$file")
+    terraform import "github_branch_protection_v3.protection[\"${repo}\"]" "${repo}:${branch}"
+  done
+}
+
+
 function main {
 
   case "$1" in
@@ -83,6 +93,9 @@ function main {
     repos)
       import_repos
       ;;
+    branch-protection)
+      import_branch_protection
+      ;;
     all)
       import_members
       import_teams
@@ -96,7 +109,7 @@ function main {
         "Designate Github Organization by environment variable GITHUB_ORG" \
         "Eg. export GITHUB_ORG=\"<organization>\"" \
         "" \
-        "Usage: $0 [members|teams|team-membership|repos|repo-collab|all]" \
+        "Usage: $0 [members|teams|team-membership|repos|repo-collab|branch-protection|all]" \
         "" \
         ""
       exit 1

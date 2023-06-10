@@ -10,7 +10,7 @@ resource "github_repository_collaborators" "collaborators" {
   dynamic "user" {
     for_each = each.value.users
     content {
-      username  = user.value.username
+      username   = user.value.username
       permission = user.value.permission
     }
   }
