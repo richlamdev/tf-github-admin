@@ -10,5 +10,5 @@ resource "github_membership" "member" {
 }
 
 #output "members" {
-  #value = github_membership.member
+#value = github_membership.member
 #}
