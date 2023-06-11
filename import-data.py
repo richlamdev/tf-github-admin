@@ -168,7 +168,7 @@ def get_team_membership_files() -> None:
     print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
-def get_branch_protection():
+def get_branch_protection() -> None:
     """
     Queries all GitHub repositories belonging to a specific organization for
     information and writes the repository information to individual JSON files,
@@ -205,11 +205,6 @@ def get_branch_protection():
             f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
         )
 
-        print()
-        print(f"Repo: {repo_name}")
-        print(f"Default Branch: {default_branch}")
-        print()
-
         with open(f"{directory_path}/{full_data_file_name}", "w") as file:
             json.dump(protection_data, file, indent=4)
 
@@ -227,7 +222,7 @@ def get_branch_protection():
             "required_status_checks", {}
         )
 
-        ### required_pull_request_reviews dictionary ###
+        # ## required_pull_request_reviews dictionary ## #
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
@@ -243,12 +238,8 @@ def get_branch_protection():
         dismissal_users = [user["login"] for user in dismiss_user_list]
         dismissal_teams = [team["slug"] for team in dismiss_team_list]
 
-        print(dismissal_users)
-        print(dismissal_teams)
-
         required_pull_request_reviews["dismissal_users"] = dismissal_users
         required_pull_request_reviews["dismissal_teams"] = dismissal_teams
-
         required_pull_request_reviews["bypass_pull_request_allowances"] = {}
 
         pull_request_allowances_users = required_pull_request_reviews.get(
@@ -275,29 +266,23 @@ def get_branch_protection():
             "teams"
         ] = bypass_pull_request_allowances_teams
 
-        print(
-            f"bypass_pull_request_alllowances_users: {bypass_pull_request_allowances_users}"
-        )
-        print(
-            f"bypass_pull_request_alllowances_teams: {bypass_pull_request_allowances_teams}"
-        )
-        ### required_pull_request_reviews dictionary ###
+        # ## required_pull_request_reviews dictionary ## #
 
-        ### restrictions dictionary ###
+        # ## restrictions dictionary ## #
         restrictions = protection_data.get("restrictions", {})
         restrict_users = restrictions.get("users", [])
         restrict_teams = restrictions.get("teams", [])
         restrictions_users = [user["login"] for user in restrict_users]
         restrictions_teams = [team["slug"] for team in restrict_teams]
 
-        # rewrite restrictions["users"] and restrictions["teams"] as a list only
+        # rewrite restrictions["users"] and restrictions["teams"] as a list
         restrictions["users"] = restrictions_users
         restrictions["teams"] = restrictions_teams
 
         print(f"restrictions_users: {restrictions_users}")
         print(f"restrictions_teams: {restrictions_teams}")
 
-        # Store the branch protection data in the repository data dictionary
+        # JSON schema
         repo_data = {
             "repository": repo_name,
             "branch": default_branch,
@@ -313,14 +298,12 @@ def get_branch_protection():
         with open(directory_path / file_name, "w") as file:
             json.dump(repo_data, file, indent=4)
 
-        print("--------------------")
-
     print(
         f"\nRepository data is written to the directory ./{directory_path}.\n"
     )
 
 
-def get_repo_info():
+def get_repo_info() -> None:
     """
     Queries all GitHub repositories belonging to a specific organization for
     information and writes the repository information to individual JSON files,
@@ -347,7 +330,7 @@ def get_repo_info():
 
         # following three lines in case you need to view all data from the api
         # full_data_file_name = repo_name + "_full_data.json"
-        # with open(f"full_data/{full_data_file_name}", "w") as f:
+        # with open(f"repos_full_data/{full_data_file_name}", "w") as f:
         # json.dump(repo_data, f, indent=4)
 
         # Loop through each repository and extract the relevant information
@@ -468,7 +451,7 @@ def get_team_members(team_name):
     return members
 
 
-def get_collaborators_and_teams():
+def get_collaborators_and_teams() -> None:
     repos = get_organization_repos()
 
     all_collaborators_and_teams = {}
