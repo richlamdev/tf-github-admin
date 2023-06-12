@@ -229,6 +229,16 @@ def get_branch_protection() -> None:
             "required_status_checks", {}
         )
 
+        required_checks = required_status_checks.get("checks", [])
+
+        formatted_list = [
+            f'{check["context"]}:{check["app_id"]}'
+            for check in required_checks
+        ]
+        print(formatted_list)
+
+        required_status_checks["checks"] = formatted_list
+
         # ## required_pull_request_reviews dictionary ## #
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
