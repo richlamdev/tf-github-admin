@@ -239,48 +239,78 @@ def get_branch_protection() -> None:
         required_status_checks["checks"] = formatted_checks
 
         # required_pull_request_reviews dictionary
+
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
 
-        dismiss_user_list = required_pull_request_reviews.get(
-            "dismissal_restrictions", {}
-        ).get("users", [])
+        if "bypass_pull_request_allowances" in required_pull_request_reviews:
+            pull_request_allowances_users = required_pull_request_reviews[
+                "bypass_pull_request_allowances"
+            ].get("users", [])
+            pull_request_allowances_teams = required_pull_request_reviews[
+                "bypass_pull_request_allowances"
+            ].get("teams", [])
 
-        dismiss_team_list = required_pull_request_reviews.get(
-            "dismissal_restrictions", {}
-        ).get("teams", [])
+            bypass_pull_request_allowances_users = [
+                user["login"] for user in pull_request_allowances_users
+            ]
+            bypass_pull_request_allowances_teams = [
+                team["slug"] for team in pull_request_allowances_teams
+            ]
 
-        dismissal_users = [user["login"] for user in dismiss_user_list]
-        dismissal_teams = [team["slug"] for team in dismiss_team_list]
+            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+            required_pull_request_reviews["bypass_pull_request_allowances"][
+                "users"
+            ] = bypass_pull_request_allowances_users
 
-        required_pull_request_reviews["dismissal_users"] = dismissal_users
-        required_pull_request_reviews["dismissal_teams"] = dismissal_teams
-        required_pull_request_reviews["bypass_pull_request_allowances"] = {}
+            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
+            required_pull_request_reviews["bypass_pull_request_allowances"][
+                "teams"
+            ] = bypass_pull_request_allowances_teams
 
-        pull_request_allowances_users = required_pull_request_reviews.get(
-            "bypass_pull_request_allowances", {}
-        ).get("users", [])
-        pull_request_allowances_teams = required_pull_request_reviews.get(
-            "bypass_pull_request_allowances", {}
-        ).get("teams", [])
+        # required_pull_request_reviews = protection_data.get(
+        #     "required_pull_request_reviews", {}
+        # )
 
-        bypass_pull_request_allowances_users = [
-            user["login"] for user in pull_request_allowances_users
-        ]
-        bypass_pull_request_allowances_teams = [
-            team["slug"] for team in pull_request_allowances_teams
-        ]
+        # dismiss_user_list = required_pull_request_reviews.get(
+        #     "dismissal_restrictions", {}
+        # ).get("users", [])
+
+        # dismiss_team_list = required_pull_request_reviews.get(
+        #     "dismissal_restrictions", {}
+        # ).get("teams", [])
+
+        # dismissal_users = [user["login"] for user in dismiss_user_list]
+        # dismissal_teams = [team["slug"] for team in dismiss_team_list]
+
+        # required_pull_request_reviews["dismissal_users"] = dismissal_users
+        # required_pull_request_reviews["dismissal_teams"] = dismissal_teams
+        # required_pull_request_reviews["bypass_pull_request_allowances"] = {}
+
+        # pull_request_allowances_users = required_pull_request_reviews.get(
+        #     "bypass_pull_request_allowances", {}
+        # ).get("users", [])
+        # pull_request_allowances_teams = required_pull_request_reviews.get(
+        #     "bypass_pull_request_allowances", {}
+        # ).get("teams", [])
+
+        # bypass_pull_request_allowances_users = [
+        #     user["login"] for user in pull_request_allowances_users
+        # ]
+        # bypass_pull_request_allowances_teams = [
+        #     team["slug"] for team in pull_request_allowances_teams
+        # ]
 
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        required_pull_request_reviews["bypass_pull_request_allowances"][
-            "users"
-        ] = bypass_pull_request_allowances_users
+        # required_pull_request_reviews["bypass_pull_request_allowances"][
+        #     "users"
+        # ] = bypass_pull_request_allowances_users
 
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-        required_pull_request_reviews["bypass_pull_request_allowances"][
-            "teams"
-        ] = bypass_pull_request_allowances_teams
+        # # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
+        # required_pull_request_reviews["bypass_pull_request_allowances"][
+        #     "teams"
+        # ] = bypass_pull_request_allowances_teams
 
         # restrictions dictionary
         # rewrite restrictions["users"] and restrictions["teams"] as a list
