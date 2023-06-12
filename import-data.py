@@ -175,13 +175,20 @@ def get_branch_protection() -> None:
     where each file name is the name of the repository.
     """
 
-    directory_path = pathlib.Path("branch-protection")
+    dir_path = pathlib.Path("branch-protection")
+    full_data_dir_path = pathlib.Path("branch-protection-full-data")
 
-    if not directory_path.exists():
-        directory_path.mkdir(parents=True)
-        print(f'The directory "./{str(directory_path)}" was created.')
+    if not dir_path.exists():
+        dir_path.mkdir(parents=True)
+        print(f'The directory "./{str(dir_path)}" was created.')
     else:
-        print(f'The directory "./{str(directory_path)}" already exists.')
+        print(f'The directory "./{str(dir_path)}" already exists.')
+
+    if not full_data_dir_path.exists():
+        full_data_dir_path.mkdir(parents=True)
+        print(f'The directory "./{str(full_data_dir_path)}" was created.')
+    else:
+        print(f'The directory "./{str(full_data_dir_path)}" already exists.')
 
     repos = get_organization_repos()
 
@@ -205,7 +212,7 @@ def get_branch_protection() -> None:
             f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
         )
 
-        with open(f"{directory_path}/{full_data_file_name}", "w") as file:
+        with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
             json.dump(protection_data, file, indent=4)
 
         # Get the protection data using dict.get()
@@ -295,28 +302,37 @@ def get_branch_protection() -> None:
         }
 
         # Write the repository data to a JSON file
-        with open(directory_path / file_name, "w") as file:
+        with open(dir_path / file_name, "w") as file:
             json.dump(repo_data, file, indent=4)
 
     print(
-        f"\nRepository data is written to the directory ./{directory_path}.\n"
+        f"\nRepository terraform data is written to the directory ./{dir_path}.\n"
+    )
+    print(
+        f"Repository full api data is written to the directory ./{dir_path}.\n"
     )
 
 
-def get_repo_info() -> None:
+def get_repos() -> None:
     """
     Queries all GitHub repositories belonging to a specific organization for
     information and writes the repository information to individual JSON files,
     where each file name is the name of the repository.
     """
 
-    directory_path = pathlib.Path("repos")
+    dir_path = pathlib.Path("repos")
+    full_data_dir_path = pathlib.Path("repos-full-data")
 
-    if not directory_path.exists():
-        directory_path.mkdir(parents=True)
-        print(f'The directory "./{str(directory_path)}" was created.')
+    if not dir_path.exists():
+        dir_path.mkdir(parents=True)
+        print(f'The directory "./{str(dir_path)}" was created.')
     else:
-        print(f'The directory "./{str(directory_path)}" already exists.')
+        print(f'The directory "./{str(dir_path)}" already exists.')
+    if not full_data_dir_path.exists():
+        full_data_dir_path.mkdir(parents=True)
+        print(f'The directory "./{str(full_data_dir_path)}" was created.')
+    else:
+        print(f'The directory "./{str(full_data_dir_path)}" already exists.')
 
     repos = get_organization_repos()
 
@@ -324,14 +340,13 @@ def get_repo_info() -> None:
     for repo in repos:
         repo_name = repo["name"]
         file_name = repo_name + ".json"
+        full_data_file_name = repo_name + "_full_data.json"
 
         # Query the /repos/{owner}/{repo} endpoint
         repo_data = github_api_request(f"/repos/{org}/{repo_name}")
 
-        # following three lines in case you need to view all data from the api
-        # full_data_file_name = repo_name + "_full_data.json"
-        # with open(f"repos_full_data/{full_data_file_name}", "w") as f:
-        # json.dump(repo_data, f, indent=4)
+        with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as f:
+            json.dump(repo_data, f, indent=4)
 
         # Loop through each repository and extract the relevant information
         # for repo in repo_data:
@@ -378,11 +393,14 @@ def get_repo_info() -> None:
             # ),
             "allow_update_branch": repo_data["allow_update_branch"],
         }
-        with open(f"{str(directory_path)}/{file_name}", "w") as f:
+        with open(f"{str(dir_path)}/{file_name}", "w") as f:
             json.dump(repo_info, f, indent=4)
 
     print(
-        f"\nRepository data is written to the directory ./{directory_path}.\n"
+        f"\nRepository terraform data is written to the directory ./{dir_path}.\n"
+    )
+    print(
+        f"Repository full api data is written to the directory ./{full_data_dir_path}.\n"
     )
 
 
@@ -588,7 +606,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-team-collab|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-team-collab|branch-protection|all]"
         )
         sys.exit(1)
 
@@ -599,7 +617,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "team-membership":
         get_team_membership()
     elif sys.argv[1] == "repos":
-        get_repo_info()
+        get_repos()
     elif sys.argv[1] == "repo-team-collab":
         get_collaborators_and_teams()
     elif sys.argv[1] == "branch-protection":
