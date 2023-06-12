@@ -46,10 +46,10 @@ function import_team_membership() {
 }
 
 
-function import_repo_collaborator() {
-  FILE="repo-collaborators.json"
-  REPO_NAME=$(jq -r 'keys[]' $FILE)
-  for repo in $REPO_NAME
+function import_repo_collaborators() {
+  file="repo-collaborators.json"
+  repos=$(jq -r 'keys[]' $file)
+  for repo in $repos
   do
       terraform import "github_repository_collaborators.collaborators[\"$repo\"]" $repo
   done
@@ -88,7 +88,7 @@ function main {
       import_team_membership
       ;;
     repo-collab)
-      import_repo_collaborator
+      import_repo_collaborators
       ;;
     repos)
       import_repos
@@ -100,8 +100,9 @@ function main {
       import_members
       import_teams
       import_team_membership
-      import_repo_collaborator
+      import_repo_collaborators
       import_repos
+      import_branch_protection
       ;;
     *)
       printf "\n%s" \

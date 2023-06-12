@@ -215,7 +215,7 @@ def get_branch_protection() -> None:
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
             json.dump(protection_data, file, indent=4)
 
-        # Get the protection data using dict.get()
+        # *** Get protection data ***
         enforce_admins = protection_data.get("enforce_admins", {}).get(
             "enabled"
         )
@@ -229,17 +229,16 @@ def get_branch_protection() -> None:
             "required_status_checks", {}
         )
 
+        # Format the required_status_checks, checks list per terraform
+        # required format
         required_checks = required_status_checks.get("checks", [])
-
-        formatted_list = [
+        formatted_checks = [
             f'{check["context"]}:{check["app_id"]}'
             for check in required_checks
         ]
-        print(formatted_list)
+        required_status_checks["checks"] = formatted_checks
 
-        required_status_checks["checks"] = formatted_list
-
-        # ## required_pull_request_reviews dictionary ## #
+        # required_pull_request_reviews dictionary
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
@@ -273,31 +272,25 @@ def get_branch_protection() -> None:
             team["slug"] for team in pull_request_allowances_teams
         ]
 
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"]
-        # required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
         required_pull_request_reviews["bypass_pull_request_allowances"][
             "users"
         ] = bypass_pull_request_allowances_users
+
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
         required_pull_request_reviews["bypass_pull_request_allowances"][
             "teams"
         ] = bypass_pull_request_allowances_teams
 
-        # ## required_pull_request_reviews dictionary ## #
-
-        # ## restrictions dictionary ## #
+        # restrictions dictionary
+        # rewrite restrictions["users"] and restrictions["teams"] as a list
         restrictions = protection_data.get("restrictions", {})
         restrict_users = restrictions.get("users", [])
         restrict_teams = restrictions.get("teams", [])
         restrictions_users = [user["login"] for user in restrict_users]
         restrictions_teams = [team["slug"] for team in restrict_teams]
-
-        # rewrite restrictions["users"] and restrictions["teams"] as a list
         restrictions["users"] = restrictions_users
         restrictions["teams"] = restrictions_teams
-
-        print(f"restrictions_users: {restrictions_users}")
-        print(f"restrictions_teams: {restrictions_teams}")
 
         # JSON schema
         repo_data = {
@@ -479,7 +472,7 @@ def get_team_members(team_name):
     return members
 
 
-def get_collaborators_and_teams() -> None:
+def get_repo_collaborators() -> None:
     repos = get_organization_repos()
 
     all_collaborators_and_teams = {}
@@ -616,7 +609,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please select an option.")
         print(
-            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-team-collab|branch-protection|all]"
+            f"Usage: {sys.argv[0]} [members|teams|team-membership|repos|repo-collab|branch-protection|all]"
         )
         sys.exit(1)
 
@@ -626,14 +619,16 @@ if __name__ == "__main__":
         get_teams()
     elif sys.argv[1] == "team-membership":
         get_team_membership()
+    elif sys.argv[1] == "repo-collab":
+        get_repo_collaborators()
     elif sys.argv[1] == "repos":
         get_repos()
-    elif sys.argv[1] == "repo-team-collab":
-        get_collaborators_and_teams()
     elif sys.argv[1] == "branch-protection":
         get_branch_protection()
     elif sys.argv[1] == "all":
         get_members()
         get_teams()
         get_team_membership()
-        get_collaborators_and_teams()
+        get_repo_collaborators()
+        get_repos()
+        get_branch_protection()
