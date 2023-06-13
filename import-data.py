@@ -260,6 +260,8 @@ def get_branch_protection() -> None:
             ]
 
             # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        if "bypass_pull_request_allowances" in required_pull_request_reviews:
             required_pull_request_reviews["bypass_pull_request_allowances"][
                 "users"
             ] = bypass_pull_request_allowances_users
@@ -269,58 +271,27 @@ def get_branch_protection() -> None:
                 "teams"
             ] = bypass_pull_request_allowances_teams
 
-        # required_pull_request_reviews = protection_data.get(
-        #     "required_pull_request_reviews", {}
-        # )
+        restrictions_data = protection_data.get("restrictions", {})
+        restrictions = {}
 
-        # dismiss_user_list = required_pull_request_reviews.get(
-        #     "dismissal_restrictions", {}
-        # ).get("users", [])
+        if restrictions_data:
+            restrict_users = restrictions_data.get("users", [])
+            restrict_teams = restrictions_data.get("teams", [])
+            restrictions_users = [user["login"] for user in restrict_users]
+            restrictions_teams = [team["slug"] for team in restrict_teams]
 
-        # dismiss_team_list = required_pull_request_reviews.get(
-        #     "dismissal_restrictions", {}
-        # ).get("teams", [])
+            if restrictions_users:
+                restrictions["users"] = restrictions_users
+            if restrictions_teams:
+                restrictions["teams"] = restrictions_teams
 
-        # dismissal_users = [user["login"] for user in dismiss_user_list]
-        # dismissal_teams = [team["slug"] for team in dismiss_team_list]
-
-        # required_pull_request_reviews["dismissal_users"] = dismissal_users
-        # required_pull_request_reviews["dismissal_teams"] = dismissal_teams
-        # required_pull_request_reviews["bypass_pull_request_allowances"] = {}
-
-        # pull_request_allowances_users = required_pull_request_reviews.get(
-        #     "bypass_pull_request_allowances", {}
-        # ).get("users", [])
-        # pull_request_allowances_teams = required_pull_request_reviews.get(
-        #     "bypass_pull_request_allowances", {}
-        # ).get("teams", [])
-
-        # bypass_pull_request_allowances_users = [
-        #     user["login"] for user in pull_request_allowances_users
-        # ]
-        # bypass_pull_request_allowances_teams = [
-        #     team["slug"] for team in pull_request_allowances_teams
-        # ]
-
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        # required_pull_request_reviews["bypass_pull_request_allowances"][
-        #     "users"
-        # ] = bypass_pull_request_allowances_users
-
-        # # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-        # required_pull_request_reviews["bypass_pull_request_allowances"][
-        #     "teams"
-        # ] = bypass_pull_request_allowances_teams
-
-        # restrictions dictionary
-        # rewrite restrictions["users"] and restrictions["teams"] as a list
-        restrictions = protection_data.get("restrictions", {})
-        restrict_users = restrictions.get("users", [])
-        restrict_teams = restrictions.get("teams", [])
-        restrictions_users = [user["login"] for user in restrict_users]
-        restrictions_teams = [team["slug"] for team in restrict_teams]
-        restrictions["users"] = restrictions_users
-        restrictions["teams"] = restrictions_teams
+        # restrictions = protection_data.get("restrictions", {})
+        # restrict_users = restrictions.get("users", [])
+        # restrict_teams = restrictions.get("teams", [])
+        # restrictions_users = [user["login"] for user in restrict_users]
+        # restrictions_teams = [team["slug"] for team in restrict_teams]
+        # restrictions["users"] = restrictions_users
+        # restrictions["teams"] = restrictions_teams
 
         # JSON schema
         repo_data = {
@@ -331,8 +302,12 @@ def get_branch_protection() -> None:
             "require_conversation_resolution": require_conversation_resolution,
             "required_status_checks": required_status_checks,
             "required_pull_request_reviews": required_pull_request_reviews,
-            "restrictions": restrictions,
+            # "restrictions": restrictions,
         }
+
+        # add restrictions block only if it is not None
+        if restrictions:
+            repo_data["restrictions"] = restrictions
 
         # Write the repository data to a JSON file
         with open(dir_path / file_name, "w") as file:

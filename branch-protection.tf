@@ -26,24 +26,23 @@ resource "github_branch_protection_v3" "protection" {
     dismiss_stale_reviews           = contains(keys(each.value.required_pull_request_reviews), "dismiss_stale_reviews") ? each.value.required_pull_request_reviews.dismiss_stale_reviews : false
     require_code_owner_reviews      = contains(keys(each.value.required_pull_request_reviews), "require_code_owner_reviews") ? each.value.required_pull_request_reviews.require_code_owner_reviews : false
     required_approving_review_count = contains(keys(each.value.required_pull_request_reviews), "required_approving_review_count") ? each.value.required_pull_request_reviews.required_approving_review_count : 0
-    bypass_pull_request_allowances {
-      users = contains(keys(each.value.required_pull_request_reviews.bypass_pull_request_allowances), "users") ? each.value.required_pull_request_reviews.bypass_pull_request_allowances.users : []
-      teams = contains(keys(each.value.required_pull_request_reviews.bypass_pull_request_allowances), "teams") ? each.value.required_pull_request_reviews.bypass_pull_request_allowances.teams : []
+
+    dynamic "bypass_pull_request_allowances" {
+      for_each = contains(keys(each.value.required_pull_request_reviews), "bypass_pull_request_allowances") ? [each.value.required_pull_request_reviews.bypass_pull_request_allowances] : []
+      content {
+        users = try(bypass_pull_request_allowances.value.users, [])
+        teams = try(bypass_pull_request_allowances.value.teams, [])
+      }
+    }
+
+  }
+
+  dynamic "restrictions" {
+    for_each = contains(keys(each.value), "restrictions") ? [each.value.restrictions] : []
+    content {
+      users = try(restrictions.value.users, [])
+      teams = try(restrictions.value.teams, [])
     }
   }
 
-  restrictions {
-    users = contains(keys(each.value.restrictions), "users") ? each.value.restrictions.users : []
-    teams = contains(keys(each.value.restrictions), "teams") ? each.value.restrictions.teams : []
-  }
-
-  # bypass_pull_request_allowances {
-  #   users = each.value.required_pull_request_reviews.bypass_pull_request_allowances.users
-  #   teams = each.value.required_pull_request_reviews.bypass_pull_request_allowances.teams
-  # }
-  # restrictions {
-  #   users = each.value.restrictions.users
-  #   teams = each.value.restrictions.teams
-  # }
 }
-
