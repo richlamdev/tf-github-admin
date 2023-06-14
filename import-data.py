@@ -265,11 +265,17 @@ def get_branch_protection() -> None:
             required_pull_request_reviews["bypass_pull_request_allowances"][
                 "users"
             ] = bypass_pull_request_allowances_users
+            # required_pull_request_reviews[
+            #     "dismissal_users"
+            # ] = bypass_pull_request_allowances_users
 
             # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
             required_pull_request_reviews["bypass_pull_request_allowances"][
                 "teams"
             ] = bypass_pull_request_allowances_teams
+            # required_pull_request_reviews[
+            #     "dismissal_teams"
+            # ] = bypass_pull_request_allowances_teams
 
         restrictions_data = protection_data.get("restrictions", {})
         restrictions = {}
