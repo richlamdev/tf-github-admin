@@ -317,7 +317,7 @@ def get_branch_protection() -> None:
         f"\nRepository terraform data is written to the directory ./{dir_path}.\n"
     )
     print(
-        f"Repository full api data is written to the directory ./{dir_path}.\n"
+        f"Repository full api data is written to the directory ./{full_data_dir_path}.\n"
     )
 
 
