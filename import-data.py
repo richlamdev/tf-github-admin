@@ -244,6 +244,24 @@ def get_branch_protection() -> None:
             "required_pull_request_reviews", {}
         )
 
+        if "dismissal_restrictions" in required_pull_request_reviews:
+            dismissal_restrictions_users = required_pull_request_reviews[
+                "dismissal_restrictions"
+            ].get("users", [])
+            dismissal_restrictions_teams = required_pull_request_reviews[
+                "dismissal_restrictions"
+            ].get("teams", [])
+
+            dismissal_users = [
+                user["login"] for user in dismissal_restrictions_users
+            ]
+            dismissal_teams = [
+                team["slug"] for team in dismissal_restrictions_teams
+            ]
+
+            required_pull_request_reviews["dismissal_users"] = dismissal_users
+            required_pull_request_reviews["dismissal_teams"] = dismissal_teams
+
         if "bypass_pull_request_allowances" in required_pull_request_reviews:
             pull_request_allowances_users = required_pull_request_reviews[
                 "bypass_pull_request_allowances"
@@ -259,7 +277,7 @@ def get_branch_protection() -> None:
                 team["slug"] for team in pull_request_allowances_teams
             ]
 
-            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
         if "bypass_pull_request_allowances" in required_pull_request_reviews:
             required_pull_request_reviews["bypass_pull_request_allowances"][
