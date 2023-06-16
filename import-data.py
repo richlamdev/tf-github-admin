@@ -215,7 +215,7 @@ def get_branch_protection() -> None:
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
             json.dump(protection_data, file, indent=4)
 
-        # *** Get protection data ***
+        # Get protection data
         enforce_admins = protection_data.get("enforce_admins", {}).get(
             "enabled"
         )
@@ -233,13 +233,17 @@ def get_branch_protection() -> None:
         # required format
         required_checks = required_status_checks.get("checks", [])
         formatted_checks = [
-            f'{check["context"]}:{check["app_id"]}'
+            check["context"]
+            if check["app_id"] is None
+            else f'{check["context"]}:{check["app_id"]}'
             for check in required_checks
         ]
         required_status_checks["checks"] = formatted_checks
 
-        # required_pull_request_reviews dictionary
+        # remove the contexts key - deprecated per terraform docs
+        required_status_checks.pop("contexts", None)
 
+        # required_pull_request_reviews dictionary
         required_pull_request_reviews = protection_data.get(
             "required_pull_request_reviews", {}
         )
@@ -308,14 +312,6 @@ def get_branch_protection() -> None:
                 restrictions["users"] = restrictions_users
             if restrictions_teams:
                 restrictions["teams"] = restrictions_teams
-
-        # restrictions = protection_data.get("restrictions", {})
-        # restrict_users = restrictions.get("users", [])
-        # restrict_teams = restrictions.get("teams", [])
-        # restrictions_users = [user["login"] for user in restrict_users]
-        # restrictions_teams = [team["slug"] for team in restrict_teams]
-        # restrictions["users"] = restrictions_users
-        # restrictions["teams"] = restrictions_teams
 
         # JSON schema
         repo_data = {
