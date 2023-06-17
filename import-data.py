@@ -497,8 +497,25 @@ def get_team_members(team_name):
     return members
 
 
+def get_organization_owners():
+    all_members = github_api_request(f"/orgs/{org}/members")
+    owners = []
+    for member in all_members:
+        username = member.get("login")
+        user_membership = github_api_request(
+            f"/orgs/{org}/memberships/{username}"
+        )
+        if user_membership.get("role") == "admin":
+            owners.append(username)
+    return owners
+
+
 def get_repo_collaborators() -> None:
     repos = get_organization_repos()
+
+    # Get all the organization owners
+    org_owners = get_organization_owners()
+    print(org_owners)
 
     all_collaborators_and_teams = {}
     for repo in repos:
@@ -547,8 +564,9 @@ def get_repo_collaborators() -> None:
                     break
 
             # If the collaborator is not part of any team,
-            # add them to the JSON output
-            if not is_in_team:
+            # add them to the JSON output only if they are not an organization owner
+            # or if they are an owner and also a collaborator
+            if not is_in_team and collaborator.get("name") not in org_owners:
                 repo_entry["users"].append(
                     {
                         "username": collaborator.get("name"),
