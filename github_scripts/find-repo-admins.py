@@ -46,6 +46,14 @@ def get_teams_with_access(repo_name):
     return teams
 
 
+def get_team_members(team_slug):
+    team_members_data = github_api_request(
+        f"/orgs/{org}/teams/{team_slug}/members"
+    )
+    team_members = [data.get("login") for data in team_members_data]
+    return team_members
+
+
 def find_repos_with_admins():
     repos = get_organization_repos()
     org_owners = get_organization_owners()
@@ -56,13 +64,20 @@ def find_repos_with_admins():
         collaborators = get_collaborators(repo_name)
         teams = get_teams_with_access(repo_name)
 
-        collaborators = [
-            collab for collab in collaborators if collab not in org_owners
+        team_members = []
+        for team in teams:
+            team_slug = team.replace(" ", "-").lower()
+            team_members.extend(get_team_members(team_slug))
+
+        individual_admins = [
+            collab
+            for collab in collaborators
+            if collab not in org_owners and collab not in team_members
         ]
 
-        if collaborators or teams:
+        if individual_admins or teams:
             repos_with_admins.append(
-                [repo_name, ", ".join(collaborators), ", ".join(teams)]
+                [repo_name, ", ".join(individual_admins), ", ".join(teams)]
             )
 
     # Write data to CSV file
@@ -70,6 +85,32 @@ def find_repos_with_admins():
         writer = csv.writer(csvfile)
         writer.writerow(["Repo", "Admins", "Teams"])
         writer.writerows(repos_with_admins)
+
+
+# def find_repos_with_admins():
+#     repos = get_organization_repos()
+#     org_owners = get_organization_owners()
+#     repos_with_admins = []
+
+#     for repo in repos:
+#         repo_name = repo.get("name")
+#         collaborators = get_collaborators(repo_name)
+#         teams = get_teams_with_access(repo_name)
+
+#         collaborators = [
+#             collab for collab in collaborators if collab not in org_owners
+#         ]
+
+#         if collaborators or teams:
+#             repos_with_admins.append(
+#                 [repo_name, ", ".join(collaborators), ", ".join(teams)]
+#             )
+
+#     # Write data to CSV file
+#     with open("repos_and_admins.csv", "w", newline="") as csvfile:
+#         writer = csv.writer(csvfile)
+#         writer.writerow(["Repo", "Admins", "Teams"])
+#         writer.writerows(repos_with_admins)
 
 
 def github_api_request(endpoint: str) -> list:
