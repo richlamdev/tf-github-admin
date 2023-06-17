@@ -515,6 +515,7 @@ def get_repo_collaborators() -> None:
 
     # Get all the organization owners
     org_owners = get_organization_owners()
+    print(org_owners)
 
     all_collaborators_and_teams = {}
     for repo in repos:
@@ -565,10 +566,7 @@ def get_repo_collaborators() -> None:
             # If the collaborator is not part of any team,
             # add them to the JSON output only if they are not an organization owner
             # or if they are an owner and also a collaborator
-            if not is_in_team and (
-                collaborator.get("name") not in org_owners
-                or collaborator.get("name") in org_owners
-            ):
+            if not is_in_team and collaborator.get("name") not in org_owners:
                 repo_entry["users"].append(
                     {
                         "username": collaborator.get("name"),
