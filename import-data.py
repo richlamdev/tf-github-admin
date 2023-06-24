@@ -607,7 +607,8 @@ def github_api_request(endpoint: str) -> list:
     )
 
     if response.status != 200:
-        print("Failed to retrieve data:", response.status)
+        #print("Failed to retrieve data:", response.status)
+        print(f"Failed to retrieve data, response code: {response.status} for endpoint: {endpoint}")
 
     data = json.loads(response.data.decode("utf-8"))
 
