@@ -68,7 +68,7 @@ while True:
 
         if (
             "message" in branch_protection
-            and branch_protection["message"] == "Not Found"
+            and branch_protection["message"] == "Branch not protected"
         ):
             print(
                 f"No branch protection applied for {repo_name} on branch {default_branch}"
