@@ -192,14 +192,44 @@ def get_branch_protection() -> None:
 
     repos = get_organization_repos()
 
+    not_protected = []
+    protected = []
+    failed_repo = []
+
     for repo in repos:
         repo_name = repo["name"]
+        default_branch = repo["default_branch"]
         file_name = repo_name + ".json"
         full_data_file_name = repo_name + "_full_data.json"
+
+        branch_protection_data = github_api_request(
+            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
+        )
+
+        if (
+            "message" in branch_protection_data
+            and branch_protection_data["message"] == "Branch not protected"
+        ):
+            print(
+                f"No branch protection applied for {repo_name} on branch {default_branch}"
+            )
+            not_protected.append(repo_name)
+        elif "url" in branch_protection_data:
+            print(
+                f"Branch protection applied for {repo_name} on branch {default_branch}"
+            )
+            protected.append(repo_name)
+        else:
+            print(
+                f"Error fetching branch protection for {repo_name} on branch {default_branch}"
+            )
+            failed_repo.append(repo_name)
 
         # Determine the default branch of the repository
         repository_info = github_api_request(f"/repos/{org}/{repo_name}")
         default_branch = repository_info["default_branch"]
+
+        # check if branch protection is applied to the default branch
 
         # Determine if the repository requires signatures
         signatures_data = github_api_request(
@@ -606,9 +636,11 @@ def github_api_request(endpoint: str) -> list:
         headers=headers,
     )
 
-    if response.status != 200:
-        #print("Failed to retrieve data:", response.status)
-        print(f"Failed to retrieve data, response code: {response.status} for endpoint: {endpoint}")
+    # if response.status != 200:
+    #     # print("Failed to retrieve data:", response.status)
+    #     print(
+    #         f"Failed to retrieve data, response code: {response.status} for endpoint: {endpoint}"
+    #     )
 
     data = json.loads(response.data.decode("utf-8"))
 
