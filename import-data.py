@@ -168,6 +168,14 @@ def get_team_membership_files() -> None:
     print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
+def create_directory(dir_path: pathlib.Path) -> None:
+    if not dir_path.exists():
+        dir_path.mkdir(parents=True)
+        print(f'The directory "./{str(dir_path)}" was created.')
+    else:
+        print(f'The directory "./{str(dir_path)}" already exists.')
+
+
 def get_branch_protection() -> None:
     """
     Queries all GitHub repositories belonging to a specific organization for
@@ -178,17 +186,8 @@ def get_branch_protection() -> None:
     dir_path = pathlib.Path("branch-protection")
     full_data_dir_path = pathlib.Path("branch-protection-full-data")
 
-    if not dir_path.exists():
-        dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(dir_path)}" already exists.')
-
-    if not full_data_dir_path.exists():
-        full_data_dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(full_data_dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(full_data_dir_path)}" already exists.')
+    create_directory(dir_path)
+    create_directory(full_data_dir_path)
 
     repos = get_organization_repos()
 
@@ -224,10 +223,6 @@ def get_branch_protection() -> None:
                 f"Error fetching branch protection for {repo_name} on branch {default_branch}"
             )
             failed_repo.append(repo_name)
-
-        # Determine the default branch of the repository
-        repository_info = github_api_request(f"/repos/{org}/{repo_name}")
-        default_branch = repository_info["default_branch"]
 
         # check if branch protection is applied to the default branch
 
