@@ -230,19 +230,6 @@ def get_branch_protection() -> None:
             )
             failed_repo.append(repo_name)
 
-        # check if branch protection is applied to the default branch
-
-        # Determine if the repository requires signatures
-        # signatures_data = github_api_request(
-        #     f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
-        # )
-        # require_signed_commits = signatures_data.get("enabled", False)
-
-        # Determine branch protection rules
-        # bp_data = github_api_request(
-        #     f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
-        # )
-
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
             json.dump(bp_data, file, indent=4)
 
@@ -283,47 +270,35 @@ def get_branch_protection() -> None:
                 "dismissal_restrictions"
             ].get("teams", [])
 
-            # dismissal_users = [
             dis_users = [user["login"] for user in dis_restrict_users]
-            dismissal_teams = [
-                team["slug"] for team in dismissal_restrictions_teams
-            ]
+            dis_teams = [team["slug"] for team in dismissal_restrictions_teams]
 
             req_pr_reviews["dismissal_users"] = dis_users
-            req_pr_reviews["dismissal_teams"] = dismissal_teams
+            req_pr_reviews["dismissal_teams"] = dis_teams
 
         if "bypass_pull_request_allowances" in req_pr_reviews:
-            pull_request_allowances_users = req_pr_reviews[
+            pr_allow_users = req_pr_reviews[
                 "bypass_pull_request_allowances"
             ].get("users", [])
-            pull_request_allowances_teams = req_pr_reviews[
+
+            pr_allow_teams = req_pr_reviews[
                 "bypass_pull_request_allowances"
             ].get("teams", [])
 
-            bypass_pull_request_allowances_users = [
-                user["login"] for user in pull_request_allowances_users
-            ]
-            bypass_pull_request_allowances_teams = [
-                team["slug"] for team in pull_request_allowances_teams
-            ]
+            bypass_pr_allow_users = [user["login"] for user in pr_allow_users]
+            bypass_pr_allow_teams = [team["slug"] for team in pr_allow_teams]
 
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
         if "bypass_pull_request_allowances" in req_pr_reviews:
             req_pr_reviews["bypass_pull_request_allowances"][
                 "users"
-            ] = bypass_pull_request_allowances_users
-            # required_pull_request_reviews[
-            #     "dismissal_users"
-            # ] = bypass_pull_request_allowances_users
+            ] = bypass_pr_allow_users
 
             # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
             req_pr_reviews["bypass_pull_request_allowances"][
                 "teams"
-            ] = bypass_pull_request_allowances_teams
-            # required_pull_request_reviews[
-            #     "dismissal_teams"
-            # ] = bypass_pull_request_allowances_teams
+            ] = bypass_pr_allow_teams
 
         restrictions_data = bp_data.get("restrictions", {})
         restrictions = {}
@@ -348,7 +323,6 @@ def get_branch_protection() -> None:
             "require_conversation_resolution": req_conv_res,
             "required_status_checks": req_stat_checks,
             "required_pull_request_reviews": req_pr_reviews,
-            # "restrictions": restrictions,
         }
 
         # add restrictions block only if it is not None
