@@ -9,6 +9,7 @@ class RepoBranchProtection:
     def __init__(self, repo, repo_bp):
         self.repo = repo
         self.repo_bp = repo_bp
+        self.signed_commits = repo_bp.get("enabled", False)
 
 
 def get_members() -> None:
@@ -191,7 +192,6 @@ def get_branch_protection() -> None:
 
     dir_path = pathlib.Path("branch-protection")
     full_data_dir_path = pathlib.Path("branch-protection-full-data")
-
     create_directory(dir_path)
     create_directory(full_data_dir_path)
 
@@ -210,6 +210,10 @@ def get_branch_protection() -> None:
         bp_data = github_api_request(
             f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
         )
+
+        repobp = RepoBranchProtection(repo_name, bp_data)
+
+        print(repobp.signed_commits)
 
         if (
             "message" in bp_data
@@ -234,11 +238,7 @@ def get_branch_protection() -> None:
             json.dump(bp_data, file, indent=4)
 
         req_signed_commits = bp_data.get("enabled", False)
-
-        # Get protection data
         enforce_admins = bp_data.get("enforce_admins", {}).get("enabled")
-
-        # req_conversation_resolution = bp_data.get(
         req_conv_res = bp_data.get("required_conversation_resolution", {}).get(
             "enabled", False
         )
@@ -266,13 +266,12 @@ def get_branch_protection() -> None:
             dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
                 "users", []
             )
-            dismissal_restrictions_teams = req_pr_reviews[
-                "dismissal_restrictions"
-            ].get("teams", [])
+            dis_restrict_teams = req_pr_reviews["dismissal_restrictions"].get(
+                "teams", []
+            )
 
             dis_users = [user["login"] for user in dis_restrict_users]
-            dis_teams = [team["slug"] for team in dismissal_restrictions_teams]
-
+            dis_teams = [team["slug"] for team in dis_restrict_teams]
             req_pr_reviews["dismissal_users"] = dis_users
             req_pr_reviews["dismissal_teams"] = dis_teams
 
