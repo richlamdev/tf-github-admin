@@ -5,6 +5,12 @@ import sys
 import pathlib
 
 
+class RepoBranchProtection:
+    def __init__(self, repo, repo_bp):
+        self.repo = repo
+        self.repo_bp = repo_bp
+
+
 def get_members() -> None:
     """
     Get a list of members in the organization.
@@ -201,19 +207,19 @@ def get_branch_protection() -> None:
         file_name = repo_name + ".json"
         full_data_file_name = repo_name + "_full_data.json"
 
-        branch_protection_data = github_api_request(
+        bp_data = github_api_request(
             f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
         )
 
         if (
-            "message" in branch_protection_data
-            and branch_protection_data["message"] == "Branch not protected"
+            "message" in bp_data
+            and bp_data["message"] == "Branch not protected"
         ):
             print(
                 f"No branch protection applied for {repo_name} on branch {default_branch}"
             )
             not_protected.append(repo_name)
-        elif "url" in branch_protection_data:
+        elif "url" in bp_data:
             print(
                 f"Branch protection applied for {repo_name} on branch {default_branch}"
             )
@@ -227,75 +233,70 @@ def get_branch_protection() -> None:
         # check if branch protection is applied to the default branch
 
         # Determine if the repository requires signatures
-        signatures_data = github_api_request(
-            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
-        )
-        require_signed_commits = signatures_data.get("enabled", False)
+        # signatures_data = github_api_request(
+        #     f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
+        # )
+        # require_signed_commits = signatures_data.get("enabled", False)
 
         # Determine branch protection rules
-        protection_data = github_api_request(
-            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
-        )
+        # bp_data = github_api_request(
+        #     f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
+        # )
 
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
-            json.dump(protection_data, file, indent=4)
+            json.dump(bp_data, file, indent=4)
+
+        req_signed_commits = bp_data.get("enabled", False)
 
         # Get protection data
-        enforce_admins = protection_data.get("enforce_admins", {}).get(
-            "enabled"
-        )
+        enforce_admins = bp_data.get("enforce_admins", {}).get("enabled")
 
-        require_conversation_resolution = protection_data.get(
-            "required_conversation_resolution", {}
-        ).get("enabled", False)
+        # req_conversation_resolution = bp_data.get(
+        req_conv_res = bp_data.get("required_conversation_resolution", {}).get(
+            "enabled", False
+        )
 
         # required_status_checks dictionary
-        required_status_checks = protection_data.get(
-            "required_status_checks", {}
-        )
+        req_stat_checks = bp_data.get("required_status_checks", {})
 
-        # Format the required_status_checks, checks list per terraform
-        # required format
-        required_checks = required_status_checks.get("checks", [])
+        # Format required_status_checks, checks list per terraform docs
+        req_checks = req_stat_checks.get("checks", [])
         formatted_checks = [
             check["context"]
             if check["app_id"] is None
             else f'{check["context"]}:{check["app_id"]}'
-            for check in required_checks
+            for check in req_checks
         ]
-        required_status_checks["checks"] = formatted_checks
+        req_stat_checks["checks"] = formatted_checks
 
         # remove the contexts key - deprecated per terraform docs
-        required_status_checks.pop("contexts", None)
+        req_stat_checks.pop("contexts", None)
 
         # required_pull_request_reviews dictionary
-        required_pull_request_reviews = protection_data.get(
-            "required_pull_request_reviews", {}
-        )
+        req_pr_reviews = bp_data.get("required_pull_request_reviews", {})
 
-        if "dismissal_restrictions" in required_pull_request_reviews:
-            dismissal_restrictions_users = required_pull_request_reviews[
-                "dismissal_restrictions"
-            ].get("users", [])
-            dismissal_restrictions_teams = required_pull_request_reviews[
+        if "dismissal_restrictions" in req_pr_reviews:
+            dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
+                "users", []
+            )
+            dismissal_restrictions_teams = req_pr_reviews[
                 "dismissal_restrictions"
             ].get("teams", [])
 
-            dismissal_users = [
-                user["login"] for user in dismissal_restrictions_users
-            ]
+            # dismissal_users = [
+            dis_users = [user["login"] for user in dis_restrict_users]
             dismissal_teams = [
                 team["slug"] for team in dismissal_restrictions_teams
             ]
 
-            required_pull_request_reviews["dismissal_users"] = dismissal_users
-            required_pull_request_reviews["dismissal_teams"] = dismissal_teams
+            req_pr_reviews["dismissal_users"] = dis_users
+            req_pr_reviews["dismissal_teams"] = dismissal_teams
 
-        if "bypass_pull_request_allowances" in required_pull_request_reviews:
-            pull_request_allowances_users = required_pull_request_reviews[
+        if "bypass_pull_request_allowances" in req_pr_reviews:
+            pull_request_allowances_users = req_pr_reviews[
                 "bypass_pull_request_allowances"
             ].get("users", [])
-            pull_request_allowances_teams = required_pull_request_reviews[
+            pull_request_allowances_teams = req_pr_reviews[
                 "bypass_pull_request_allowances"
             ].get("teams", [])
 
@@ -308,8 +309,8 @@ def get_branch_protection() -> None:
 
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
         # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        if "bypass_pull_request_allowances" in required_pull_request_reviews:
-            required_pull_request_reviews["bypass_pull_request_allowances"][
+        if "bypass_pull_request_allowances" in req_pr_reviews:
+            req_pr_reviews["bypass_pull_request_allowances"][
                 "users"
             ] = bypass_pull_request_allowances_users
             # required_pull_request_reviews[
@@ -317,14 +318,14 @@ def get_branch_protection() -> None:
             # ] = bypass_pull_request_allowances_users
 
             # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-            required_pull_request_reviews["bypass_pull_request_allowances"][
+            req_pr_reviews["bypass_pull_request_allowances"][
                 "teams"
             ] = bypass_pull_request_allowances_teams
             # required_pull_request_reviews[
             #     "dismissal_teams"
             # ] = bypass_pull_request_allowances_teams
 
-        restrictions_data = protection_data.get("restrictions", {})
+        restrictions_data = bp_data.get("restrictions", {})
         restrictions = {}
 
         if restrictions_data:
@@ -343,10 +344,10 @@ def get_branch_protection() -> None:
             "repository": repo_name,
             "branch": default_branch,
             "enforce_admins": enforce_admins,
-            "require_signed_commits": require_signed_commits,
-            "require_conversation_resolution": require_conversation_resolution,
-            "required_status_checks": required_status_checks,
-            "required_pull_request_reviews": required_pull_request_reviews,
+            "require_signed_commits": req_signed_commits,
+            "require_conversation_resolution": req_conv_res,
+            "required_status_checks": req_stat_checks,
+            "required_pull_request_reviews": req_pr_reviews,
             # "restrictions": restrictions,
         }
 
