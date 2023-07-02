@@ -9,7 +9,9 @@ class RepoBranchProtection:
     def __init__(self, repo, repo_bp):
         self.repo = repo
         self.repo_bp = repo_bp
-        self.signed_commits = repo_bp.get("enabled", False)
+        self.signed_commits = repo_bp.get("required_signatures", {}).get(
+            "enabled", False
+        )
         self.enforce_admins = repo_bp.get("enforce_admins", {}).get(
             "enabled", False
         )
@@ -237,8 +239,6 @@ def get_branch_protection() -> None:
 
         repobp = RepoBranchProtection(repo_name, bp_data)
 
-        print(repobp.signed_commits)
-
         if (
             "message" in bp_data
             and bp_data["message"] == "Branch not protected"
@@ -261,11 +261,17 @@ def get_branch_protection() -> None:
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
             json.dump(bp_data, file, indent=4)
 
-        req_signed_commits = bp_data.get("enabled", False)
-        enforce_admins = bp_data.get("enforce_admins", {}).get("enabled")
-        req_conv_res = bp_data.get("required_conversation_resolution", {}).get(
-            "enabled", False
-        )
+        # req_signed_commits = bp_data.get("enabled", False)
+        # enforce_admins = bp_data.get("enforce_admins", {}).get("enabled")
+        # req_conv_res = bp_data.get("required_conversation_resolution", {}).get(
+        # "enabled", False
+        # )
+
+        # Determine if the repository requires signatures
+        # signatures_data = github_api_request(
+        #     f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
+        # )
+        # require_signed_commits = signatures_data.get("enabled", False)
 
         # required_status_checks dictionary
         req_stat_checks = bp_data.get("required_status_checks", {})
@@ -342,9 +348,7 @@ def get_branch_protection() -> None:
             "repository": repo_name,
             "branch": default_branch,
             "enforce_admins": repobp.enforce_admins,
-            # "require_signed_commits": req_signed_commits,
             "require_signed_commits": repobp.signed_commits,
-            # "require_conversation_resolution": req_conv_res,
             "require_conversation_resolution": repobp.required_conversation_resolution,
             # "required_status_checks": req_stat_checks,
             "required_status_checks": repobp.required_status_checks,
