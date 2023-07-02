@@ -21,6 +21,8 @@ class RepoBranchProtection:
 
         self.required_status_checks = self.status_checks()
 
+        self.required_pull_request_reviews = self.pull_request_reviews()
+
     def status_checks(self):
         req_stat_checks = self.repo_bp.get("required_status_checks", {})
         req_checks = req_stat_checks.get("checks", [])
@@ -36,6 +38,64 @@ class RepoBranchProtection:
         req_stat_checks.pop("contexts", None)
 
         return req_stat_checks
+
+    def pull_request_reviews(self):
+        req_pr_reviews = self.repo_bp.get("required_pull_request_reviews", {})
+
+        if "dismissal_restrictions" in req_pr_reviews:
+            dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
+                "users", []
+            )
+            dis_restrict_teams = req_pr_reviews["dismissal_restrictions"].get(
+                "teams", []
+            )
+
+            dis_users = [
+                user["login"]
+                for user in dis_restrict_users
+                if isinstance(user, dict)
+            ]
+            dis_teams = [
+                team["slug"]
+                for team in dis_restrict_teams
+                if isinstance(team, dict)
+            ]
+            req_pr_reviews["dismissal_users"] = dis_users
+            req_pr_reviews["dismissal_teams"] = dis_teams
+
+        if "bypass_pull_request_allowances" in req_pr_reviews:
+            pr_allow_users = req_pr_reviews[
+                "bypass_pull_request_allowances"
+            ].get("users", [])
+
+            pr_allow_teams = req_pr_reviews[
+                "bypass_pull_request_allowances"
+            ].get("teams", [])
+
+            bypass_pr_allow_users = [
+                user["login"]
+                for user in pr_allow_users
+                if isinstance(user, dict)
+            ]
+            bypass_pr_allow_teams = [
+                team["slug"]
+                for team in pr_allow_teams
+                if isinstance(team, dict)
+            ]
+
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        if "bypass_pull_request_allowances" in req_pr_reviews:
+            req_pr_reviews["bypass_pull_request_allowances"][
+                "users"
+            ] = bypass_pr_allow_users
+
+            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
+            req_pr_reviews["bypass_pull_request_allowances"][
+                "teams"
+            ] = bypass_pr_allow_teams
+
+        return req_pr_reviews
 
 
 def get_members() -> None:
@@ -274,60 +334,60 @@ def get_branch_protection() -> None:
         # require_signed_commits = signatures_data.get("enabled", False)
 
         # required_status_checks dictionary
-        req_stat_checks = bp_data.get("required_status_checks", {})
+        # req_stat_checks = bp_data.get("required_status_checks", {})
 
-        # Format required_status_checks, checks list per terraform docs
-        req_checks = req_stat_checks.get("checks", [])
-        formatted_checks = [
-            check["context"]
-            if check["app_id"] is None
-            else f'{check["context"]}:{check["app_id"]}'
-            for check in req_checks
-        ]
-        req_stat_checks["checks"] = formatted_checks
+        # # Format required_status_checks, checks list per terraform docs
+        # req_checks = req_stat_checks.get("checks", [])
+        # formatted_checks = [
+        #     check["context"]
+        #     if check["app_id"] is None
+        #     else f'{check["context"]}:{check["app_id"]}'
+        #     for check in req_checks
+        # ]
+        # req_stat_checks["checks"] = formatted_checks
 
-        # remove the contexts key - deprecated per terraform docs
-        req_stat_checks.pop("contexts", None)
+        # # remove the contexts key - deprecated per terraform docs
+        # req_stat_checks.pop("contexts", None)
 
         # required_pull_request_reviews dictionary
-        req_pr_reviews = bp_data.get("required_pull_request_reviews", {})
+        # req_pr_reviews = bp_data.get("required_pull_request_reviews", {})
 
-        if "dismissal_restrictions" in req_pr_reviews:
-            dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
-                "users", []
-            )
-            dis_restrict_teams = req_pr_reviews["dismissal_restrictions"].get(
-                "teams", []
-            )
+        # if "dismissal_restrictions" in req_pr_reviews:
+        #     dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
+        #         "users", []
+        #     )
+        #     dis_restrict_teams = req_pr_reviews["dismissal_restrictions"].get(
+        #         "teams", []
+        #     )
 
-            dis_users = [user["login"] for user in dis_restrict_users]
-            dis_teams = [team["slug"] for team in dis_restrict_teams]
-            req_pr_reviews["dismissal_users"] = dis_users
-            req_pr_reviews["dismissal_teams"] = dis_teams
+        #     dis_users = [user["login"] for user in dis_restrict_users]
+        #     dis_teams = [team["slug"] for team in dis_restrict_teams]
+        #     req_pr_reviews["dismissal_users"] = dis_users
+        #     req_pr_reviews["dismissal_teams"] = dis_teams
 
-        if "bypass_pull_request_allowances" in req_pr_reviews:
-            pr_allow_users = req_pr_reviews[
-                "bypass_pull_request_allowances"
-            ].get("users", [])
+        # if "bypass_pull_request_allowances" in req_pr_reviews:
+        #     pr_allow_users = req_pr_reviews[
+        #         "bypass_pull_request_allowances"
+        #     ].get("users", [])
 
-            pr_allow_teams = req_pr_reviews[
-                "bypass_pull_request_allowances"
-            ].get("teams", [])
+        #     pr_allow_teams = req_pr_reviews[
+        #         "bypass_pull_request_allowances"
+        #     ].get("teams", [])
 
-            bypass_pr_allow_users = [user["login"] for user in pr_allow_users]
-            bypass_pr_allow_teams = [team["slug"] for team in pr_allow_teams]
+        #     bypass_pr_allow_users = [user["login"] for user in pr_allow_users]
+        #     bypass_pr_allow_teams = [team["slug"] for team in pr_allow_teams]
 
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        if "bypass_pull_request_allowances" in req_pr_reviews:
-            req_pr_reviews["bypass_pull_request_allowances"][
-                "users"
-            ] = bypass_pr_allow_users
+        # # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        # # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        # if "bypass_pull_request_allowances" in req_pr_reviews:
+        #     req_pr_reviews["bypass_pull_request_allowances"][
+        #         "users"
+        #     ] = bypass_pr_allow_users
 
-            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-            req_pr_reviews["bypass_pull_request_allowances"][
-                "teams"
-            ] = bypass_pr_allow_teams
+        #     # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
+        #     req_pr_reviews["bypass_pull_request_allowances"][
+        #         "teams"
+        #     ] = bypass_pr_allow_teams
 
         restrictions_data = bp_data.get("restrictions", {})
         restrictions = {}
@@ -352,7 +412,8 @@ def get_branch_protection() -> None:
             "require_conversation_resolution": repobp.required_conversation_resolution,
             # "required_status_checks": req_stat_checks,
             "required_status_checks": repobp.required_status_checks,
-            "required_pull_request_reviews": req_pr_reviews,
+            # "required_pull_request_reviews": req_pr_reviews,
+            "required_pull_request_reviews": repobp.required_pull_request_reviews,
         }
 
         # add restrictions block only if it is not None
@@ -380,17 +441,8 @@ def get_repos() -> None:
 
     dir_path = pathlib.Path("repos")
     full_data_dir_path = pathlib.Path("repos-full-data")
-
-    if not dir_path.exists():
-        dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(dir_path)}" already exists.')
-    if not full_data_dir_path.exists():
-        full_data_dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(full_data_dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(full_data_dir_path)}" already exists.')
+    create_directory(dir_path)
+    create_directory(full_data_dir_path)
 
     repos = get_organization_repos()
 
