@@ -10,6 +10,30 @@ class RepoBranchProtection:
         self.repo = repo
         self.repo_bp = repo_bp
         self.signed_commits = repo_bp.get("enabled", False)
+        self.enforce_admins = repo_bp.get("enforce_admins", {}).get(
+            "enabled", False
+        )
+        self.required_conversation_resolution = repo_bp.get(
+            "required_conversation_resolution", {}
+        ).get("enabled", False)
+
+        self.required_status_checks = self.status_checks()
+
+    def status_checks(self):
+        req_stat_checks = self.repo_bp.get("required_status_checks", {})
+        req_checks = req_stat_checks.get("checks", [])
+
+        formatted_checks = [
+            check["context"]
+            if check["app_id"] is None
+            else f'{check["context"]}:{check["app_id"]}'
+            for check in req_checks
+        ]
+
+        req_stat_checks["checks"] = formatted_checks
+        req_stat_checks.pop("contexts", None)
+
+        return req_stat_checks
 
 
 def get_members() -> None:
@@ -317,10 +341,13 @@ def get_branch_protection() -> None:
         repo_data = {
             "repository": repo_name,
             "branch": default_branch,
-            "enforce_admins": enforce_admins,
-            "require_signed_commits": req_signed_commits,
-            "require_conversation_resolution": req_conv_res,
-            "required_status_checks": req_stat_checks,
+            "enforce_admins": repobp.enforce_admins,
+            # "require_signed_commits": req_signed_commits,
+            "require_signed_commits": repobp.signed_commits,
+            # "require_conversation_resolution": req_conv_res,
+            "require_conversation_resolution": repobp.required_conversation_resolution,
+            # "required_status_checks": req_stat_checks,
+            "required_status_checks": repobp.required_status_checks,
             "required_pull_request_reviews": req_pr_reviews,
         }
 
