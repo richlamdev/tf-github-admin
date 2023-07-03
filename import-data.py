@@ -13,18 +13,19 @@ class RepoBranchProtection:
             "enabled", False
         )
         self.enforce_admins = repo_bp.get("enforce_admins", {}).get(
-            "enabled", False
+            "enabled", True
         )
         self.required_conversation_resolution = repo_bp.get(
             "required_conversation_resolution", {}
         ).get("enabled", False)
 
         self.required_status_checks = self.status_checks()
-
         self.required_pull_request_reviews = self.pull_request_reviews()
+        self.restrictions = self.restricts()
 
     def status_checks(self):
         req_stat_checks = self.repo_bp.get("required_status_checks", {})
+        req_strict = req_stat_checks.get("strict", True)
         req_checks = req_stat_checks.get("checks", [])
 
         formatted_checks = [
@@ -36,11 +37,16 @@ class RepoBranchProtection:
 
         req_stat_checks["checks"] = formatted_checks
         req_stat_checks.pop("contexts", None)
+        req_stat_checks["strict"] = req_strict
 
         return req_stat_checks
 
     def pull_request_reviews(self):
         req_pr_reviews = self.repo_bp.get("required_pull_request_reviews", {})
+        req_review_count = req_pr_reviews.get(
+            "required_approving_review_count", 1
+        )
+        req_pr_reviews["required_approving_review_count"] = req_review_count
 
         if "dismissal_restrictions" in req_pr_reviews:
             dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
@@ -96,6 +102,23 @@ class RepoBranchProtection:
             ] = bypass_pr_allow_teams
 
         return req_pr_reviews
+
+    def restricts(self):
+        restrictions_data = self.repo_bp.get("restrictions", {})
+        restrictions = {}
+
+        if restrictions_data:
+            restrict_users = restrictions_data.get("users", [])
+            restrict_teams = restrictions_data.get("teams", [])
+            restrictions_users = [user["login"] for user in restrict_users]
+            restrictions_teams = [team["slug"] for team in restrict_teams]
+
+            if restrictions_users:
+                restrictions["users"] = restrictions_users
+            if restrictions_teams:
+                restrictions["teams"] = restrictions_teams
+
+        return restrictions
 
 
 def get_members() -> None:
@@ -289,12 +312,12 @@ def get_branch_protection() -> None:
 
     for repo in repos:
         repo_name = repo["name"]
-        default_branch = repo["default_branch"]
+        def_branch = repo["default_branch"]
         file_name = repo_name + ".json"
         full_data_file_name = repo_name + "_full_data.json"
 
         bp_data = github_api_request(
-            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
+            f"/repos/{org}/{repo_name}/branches/{def_branch}/protection"
         )
 
         repobp = RepoBranchProtection(repo_name, bp_data)
@@ -303,19 +326,13 @@ def get_branch_protection() -> None:
             "message" in bp_data
             and bp_data["message"] == "Branch not protected"
         ):
-            print(
-                f"No branch protection applied for {repo_name} on branch {default_branch}"
-            )
+            print(f"No branch protection: {repo_name}:{def_branch}")
             not_protected.append(repo_name)
         elif "url" in bp_data:
-            print(
-                f"Branch protection applied for {repo_name} on branch {default_branch}"
-            )
+            print(f"Branch protection: {repo_name}:{def_branch}")
             protected.append(repo_name)
         else:
-            print(
-                f"Error fetching branch protection for {repo_name} on branch {default_branch}"
-            )
+            print(f"Branch protection error: {repo_name}:{def_branch}")
             failed_repo.append(repo_name)
 
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
@@ -329,7 +346,7 @@ def get_branch_protection() -> None:
 
         # Determine if the repository requires signatures
         # signatures_data = github_api_request(
-        #     f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
+        #     f"/repos/{org}/{repo_name}/branches/{def_branch}/protection/required_signatures"
         # )
         # require_signed_commits = signatures_data.get("enabled", False)
 
@@ -389,24 +406,24 @@ def get_branch_protection() -> None:
         #         "teams"
         #     ] = bypass_pr_allow_teams
 
-        restrictions_data = bp_data.get("restrictions", {})
-        restrictions = {}
+        # restrictions_data = bp_data.get("restrictions", {})
+        # restrictions = {}
 
-        if restrictions_data:
-            restrict_users = restrictions_data.get("users", [])
-            restrict_teams = restrictions_data.get("teams", [])
-            restrictions_users = [user["login"] for user in restrict_users]
-            restrictions_teams = [team["slug"] for team in restrict_teams]
+        # if restrictions_data:
+        #     restrict_users = restrictions_data.get("users", [])
+        #     restrict_teams = restrictions_data.get("teams", [])
+        #     restrictions_users = [user["login"] for user in restrict_users]
+        #     restrictions_teams = [team["slug"] for team in restrict_teams]
 
-            if restrictions_users:
-                restrictions["users"] = restrictions_users
-            if restrictions_teams:
-                restrictions["teams"] = restrictions_teams
+        #     if restrictions_users:
+        #         restrictions["users"] = restrictions_users
+        #     if restrictions_teams:
+        #         restrictions["teams"] = restrictions_teams
 
         # JSON schema
         repo_data = {
             "repository": repo_name,
-            "branch": default_branch,
+            "branch": def_branch,
             "enforce_admins": repobp.enforce_admins,
             "require_signed_commits": repobp.signed_commits,
             "require_conversation_resolution": repobp.required_conversation_resolution,
@@ -417,8 +434,9 @@ def get_branch_protection() -> None:
         }
 
         # add restrictions block only if it is not None
-        if restrictions:
-            repo_data["restrictions"] = restrictions
+        # if restrictions:
+        if repobp.restrictions:
+            repo_data["restrictions"] = repobp.restrictions
 
         # Write the repository data to a JSON file
         with open(dir_path / file_name, "w") as file:
