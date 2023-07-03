@@ -6,8 +6,7 @@ import pathlib
 
 
 class RepoBranchProtection:
-    def __init__(self, repo, repo_bp):
-        self.repo = repo
+    def __init__(self, repo_bp):
         self.repo_bp = repo_bp
         self.signed_commits = repo_bp.get("required_signatures", {}).get(
             "enabled", False
@@ -320,7 +319,8 @@ def get_branch_protection() -> None:
             f"/repos/{org}/{repo_name}/branches/{def_branch}/protection"
         )
 
-        repobp = RepoBranchProtection(repo_name, bp_data)
+        # use class to determine branch protection rules
+        repobp = RepoBranchProtection(bp_data)
 
         if (
             "message" in bp_data
@@ -338,88 +338,6 @@ def get_branch_protection() -> None:
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
             json.dump(bp_data, file, indent=4)
 
-        # req_signed_commits = bp_data.get("enabled", False)
-        # enforce_admins = bp_data.get("enforce_admins", {}).get("enabled")
-        # req_conv_res = bp_data.get("required_conversation_resolution", {}).get(
-        # "enabled", False
-        # )
-
-        # Determine if the repository requires signatures
-        # signatures_data = github_api_request(
-        #     f"/repos/{org}/{repo_name}/branches/{def_branch}/protection/required_signatures"
-        # )
-        # require_signed_commits = signatures_data.get("enabled", False)
-
-        # required_status_checks dictionary
-        # req_stat_checks = bp_data.get("required_status_checks", {})
-
-        # # Format required_status_checks, checks list per terraform docs
-        # req_checks = req_stat_checks.get("checks", [])
-        # formatted_checks = [
-        #     check["context"]
-        #     if check["app_id"] is None
-        #     else f'{check["context"]}:{check["app_id"]}'
-        #     for check in req_checks
-        # ]
-        # req_stat_checks["checks"] = formatted_checks
-
-        # # remove the contexts key - deprecated per terraform docs
-        # req_stat_checks.pop("contexts", None)
-
-        # required_pull_request_reviews dictionary
-        # req_pr_reviews = bp_data.get("required_pull_request_reviews", {})
-
-        # if "dismissal_restrictions" in req_pr_reviews:
-        #     dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
-        #         "users", []
-        #     )
-        #     dis_restrict_teams = req_pr_reviews["dismissal_restrictions"].get(
-        #         "teams", []
-        #     )
-
-        #     dis_users = [user["login"] for user in dis_restrict_users]
-        #     dis_teams = [team["slug"] for team in dis_restrict_teams]
-        #     req_pr_reviews["dismissal_users"] = dis_users
-        #     req_pr_reviews["dismissal_teams"] = dis_teams
-
-        # if "bypass_pull_request_allowances" in req_pr_reviews:
-        #     pr_allow_users = req_pr_reviews[
-        #         "bypass_pull_request_allowances"
-        #     ].get("users", [])
-
-        #     pr_allow_teams = req_pr_reviews[
-        #         "bypass_pull_request_allowances"
-        #     ].get("teams", [])
-
-        #     bypass_pr_allow_users = [user["login"] for user in pr_allow_users]
-        #     bypass_pr_allow_teams = [team["slug"] for team in pr_allow_teams]
-
-        # # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        # # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        # if "bypass_pull_request_allowances" in req_pr_reviews:
-        #     req_pr_reviews["bypass_pull_request_allowances"][
-        #         "users"
-        #     ] = bypass_pr_allow_users
-
-        #     # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-        #     req_pr_reviews["bypass_pull_request_allowances"][
-        #         "teams"
-        #     ] = bypass_pr_allow_teams
-
-        # restrictions_data = bp_data.get("restrictions", {})
-        # restrictions = {}
-
-        # if restrictions_data:
-        #     restrict_users = restrictions_data.get("users", [])
-        #     restrict_teams = restrictions_data.get("teams", [])
-        #     restrictions_users = [user["login"] for user in restrict_users]
-        #     restrictions_teams = [team["slug"] for team in restrict_teams]
-
-        #     if restrictions_users:
-        #         restrictions["users"] = restrictions_users
-        #     if restrictions_teams:
-        #         restrictions["teams"] = restrictions_teams
-
         # JSON schema
         repo_data = {
             "repository": repo_name,
@@ -427,14 +345,11 @@ def get_branch_protection() -> None:
             "enforce_admins": repobp.enforce_admins,
             "require_signed_commits": repobp.signed_commits,
             "require_conversation_resolution": repobp.required_conversation_resolution,
-            # "required_status_checks": req_stat_checks,
             "required_status_checks": repobp.required_status_checks,
-            # "required_pull_request_reviews": req_pr_reviews,
             "required_pull_request_reviews": repobp.required_pull_request_reviews,
         }
 
-        # add restrictions block only if it is not None
-        # if restrictions:
+        # add restrictions key only if it is not None
         if repobp.restrictions:
             repo_data["restrictions"] = repobp.restrictions
 
