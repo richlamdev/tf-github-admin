@@ -5,6 +5,121 @@ import sys
 import pathlib
 
 
+class RepoBranchProtection:
+    def __init__(self, repo_bp):
+        self.repo_bp = repo_bp
+        self.signed_commits = repo_bp.get("required_signatures", {}).get(
+            "enabled", False
+        )
+        self.enforce_admins = repo_bp.get("enforce_admins", {}).get(
+            "enabled", True
+        )
+        self.required_conversation_resolution = repo_bp.get(
+            "required_conversation_resolution", {}
+        ).get("enabled", False)
+
+        self.required_status_checks = self.status_checks()
+        self.required_pull_request_reviews = self.pull_request_reviews()
+        self.restrictions = self.restricts()
+
+    def status_checks(self):
+        req_stat_checks = self.repo_bp.get("required_status_checks", {})
+        req_strict = req_stat_checks.get("strict", True)
+        req_checks = req_stat_checks.get("checks", [])
+
+        formatted_checks = [
+            check["context"]
+            if check["app_id"] is None
+            else f'{check["context"]}:{check["app_id"]}'
+            for check in req_checks
+        ]
+
+        req_stat_checks["checks"] = formatted_checks
+        req_stat_checks.pop("contexts", None)
+        req_stat_checks["strict"] = req_strict
+
+        return req_stat_checks
+
+    def pull_request_reviews(self):
+        req_pr_reviews = self.repo_bp.get("required_pull_request_reviews", {})
+        req_review_count = req_pr_reviews.get(
+            "required_approving_review_count", 1
+        )
+        req_pr_reviews["required_approving_review_count"] = req_review_count
+
+        if "dismissal_restrictions" in req_pr_reviews:
+            dis_restrict_users = req_pr_reviews["dismissal_restrictions"].get(
+                "users", []
+            )
+            dis_restrict_teams = req_pr_reviews["dismissal_restrictions"].get(
+                "teams", []
+            )
+
+            dis_users = [
+                user["login"]
+                for user in dis_restrict_users
+                if isinstance(user, dict)
+            ]
+            dis_teams = [
+                team["slug"]
+                for team in dis_restrict_teams
+                if isinstance(team, dict)
+            ]
+            req_pr_reviews["dismissal_users"] = dis_users
+            req_pr_reviews["dismissal_teams"] = dis_teams
+
+        if "bypass_pull_request_allowances" in req_pr_reviews:
+            pr_allow_users = req_pr_reviews[
+                "bypass_pull_request_allowances"
+            ].get("users", [])
+
+            pr_allow_teams = req_pr_reviews[
+                "bypass_pull_request_allowances"
+            ].get("teams", [])
+
+            bypass_pr_allow_users = [
+                user["login"]
+                for user in pr_allow_users
+                if isinstance(user, dict)
+            ]
+            bypass_pr_allow_teams = [
+                team["slug"]
+                for team in pr_allow_teams
+                if isinstance(team, dict)
+            ]
+
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
+        if "bypass_pull_request_allowances" in req_pr_reviews:
+            req_pr_reviews["bypass_pull_request_allowances"][
+                "users"
+            ] = bypass_pr_allow_users
+
+            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
+            req_pr_reviews["bypass_pull_request_allowances"][
+                "teams"
+            ] = bypass_pr_allow_teams
+
+        return req_pr_reviews
+
+    def restricts(self):
+        restrictions_data = self.repo_bp.get("restrictions", {})
+        restrictions = {}
+
+        if restrictions_data:
+            restrict_users = restrictions_data.get("users", [])
+            restrict_teams = restrictions_data.get("teams", [])
+            restrictions_users = [user["login"] for user in restrict_users]
+            restrictions_teams = [team["slug"] for team in restrict_teams]
+
+            if restrictions_users:
+                restrictions["users"] = restrictions_users
+            if restrictions_teams:
+                restrictions["teams"] = restrictions_teams
+
+        return restrictions
+
+
 def get_members() -> None:
     """
     Get a list of members in the organization.
@@ -168,6 +283,14 @@ def get_team_membership_files() -> None:
     print(f"\nList of team membership information written to {TEAMS_FOLDER}\n")
 
 
+def create_directory(dir_path: pathlib.Path) -> None:
+    if not dir_path.exists():
+        dir_path.mkdir(parents=True)
+        print(f'The directory "./{str(dir_path)}" was created.')
+    else:
+        print(f'The directory "./{str(dir_path)}" already exists.')
+
+
 def get_branch_protection() -> None:
     """
     Queries all GitHub repositories belonging to a specific organization for
@@ -177,18 +300,8 @@ def get_branch_protection() -> None:
 
     dir_path = pathlib.Path("branch-protection")
     full_data_dir_path = pathlib.Path("branch-protection-full-data")
-
-    if not dir_path.exists():
-        dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(dir_path)}" already exists.')
-
-    if not full_data_dir_path.exists():
-        full_data_dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(full_data_dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(full_data_dir_path)}" already exists.')
+    create_directory(dir_path)
+    create_directory(full_data_dir_path)
 
     repos = get_organization_repos()
 
@@ -198,166 +311,47 @@ def get_branch_protection() -> None:
 
     for repo in repos:
         repo_name = repo["name"]
-        default_branch = repo["default_branch"]
+        def_branch = repo["default_branch"]
         file_name = repo_name + ".json"
         full_data_file_name = repo_name + "_full_data.json"
 
-        branch_protection_data = github_api_request(
-            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
+        bp_data = github_api_request(
+            f"/repos/{org}/{repo_name}/branches/{def_branch}/protection"
         )
+
+        # use class to determine branch protection rules
+        repobp = RepoBranchProtection(bp_data)
 
         if (
-            "message" in branch_protection_data
-            and branch_protection_data["message"] == "Branch not protected"
+            "message" in bp_data
+            and bp_data["message"] == "Branch not protected"
         ):
-            print(
-                f"No branch protection applied for {repo_name} on branch {default_branch}"
-            )
+            print(f"No branch protection: {repo_name}:{def_branch}")
             not_protected.append(repo_name)
-        elif "url" in branch_protection_data:
-            print(
-                f"Branch protection applied for {repo_name} on branch {default_branch}"
-            )
+        elif "url" in bp_data:
+            print(f"Branch protection: {repo_name}:{def_branch}")
             protected.append(repo_name)
         else:
-            print(
-                f"Error fetching branch protection for {repo_name} on branch {default_branch}"
-            )
+            print(f"Branch protection error: {repo_name}:{def_branch}")
             failed_repo.append(repo_name)
 
-        # Determine the default branch of the repository
-        repository_info = github_api_request(f"/repos/{org}/{repo_name}")
-        default_branch = repository_info["default_branch"]
-
-        # check if branch protection is applied to the default branch
-
-        # Determine if the repository requires signatures
-        signatures_data = github_api_request(
-            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection/required_signatures"
-        )
-        require_signed_commits = signatures_data.get("enabled", False)
-
-        # Determine branch protection rules
-        protection_data = github_api_request(
-            f"/repos/{org}/{repo_name}/branches/{default_branch}/protection"
-        )
-
         with open(f"{full_data_dir_path}/{full_data_file_name}", "w") as file:
-            json.dump(protection_data, file, indent=4)
-
-        # Get protection data
-        enforce_admins = protection_data.get("enforce_admins", {}).get(
-            "enabled"
-        )
-
-        require_conversation_resolution = protection_data.get(
-            "required_conversation_resolution", {}
-        ).get("enabled", False)
-
-        # required_status_checks dictionary
-        required_status_checks = protection_data.get(
-            "required_status_checks", {}
-        )
-
-        # Format the required_status_checks, checks list per terraform
-        # required format
-        required_checks = required_status_checks.get("checks", [])
-        formatted_checks = [
-            check["context"]
-            if check["app_id"] is None
-            else f'{check["context"]}:{check["app_id"]}'
-            for check in required_checks
-        ]
-        required_status_checks["checks"] = formatted_checks
-
-        # remove the contexts key - deprecated per terraform docs
-        required_status_checks.pop("contexts", None)
-
-        # required_pull_request_reviews dictionary
-        required_pull_request_reviews = protection_data.get(
-            "required_pull_request_reviews", {}
-        )
-
-        if "dismissal_restrictions" in required_pull_request_reviews:
-            dismissal_restrictions_users = required_pull_request_reviews[
-                "dismissal_restrictions"
-            ].get("users", [])
-            dismissal_restrictions_teams = required_pull_request_reviews[
-                "dismissal_restrictions"
-            ].get("teams", [])
-
-            dismissal_users = [
-                user["login"] for user in dismissal_restrictions_users
-            ]
-            dismissal_teams = [
-                team["slug"] for team in dismissal_restrictions_teams
-            ]
-
-            required_pull_request_reviews["dismissal_users"] = dismissal_users
-            required_pull_request_reviews["dismissal_teams"] = dismissal_teams
-
-        if "bypass_pull_request_allowances" in required_pull_request_reviews:
-            pull_request_allowances_users = required_pull_request_reviews[
-                "bypass_pull_request_allowances"
-            ].get("users", [])
-            pull_request_allowances_teams = required_pull_request_reviews[
-                "bypass_pull_request_allowances"
-            ].get("teams", [])
-
-            bypass_pull_request_allowances_users = [
-                user["login"] for user in pull_request_allowances_users
-            ]
-            bypass_pull_request_allowances_teams = [
-                team["slug"] for team in pull_request_allowances_teams
-            ]
-
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["users"] as lists
-        if "bypass_pull_request_allowances" in required_pull_request_reviews:
-            required_pull_request_reviews["bypass_pull_request_allowances"][
-                "users"
-            ] = bypass_pull_request_allowances_users
-            # required_pull_request_reviews[
-            #     "dismissal_users"
-            # ] = bypass_pull_request_allowances_users
-
-            # rewrite required_pull_request_reviews["bypass_pull_request_allowances"]["teams"] as lists
-            required_pull_request_reviews["bypass_pull_request_allowances"][
-                "teams"
-            ] = bypass_pull_request_allowances_teams
-            # required_pull_request_reviews[
-            #     "dismissal_teams"
-            # ] = bypass_pull_request_allowances_teams
-
-        restrictions_data = protection_data.get("restrictions", {})
-        restrictions = {}
-
-        if restrictions_data:
-            restrict_users = restrictions_data.get("users", [])
-            restrict_teams = restrictions_data.get("teams", [])
-            restrictions_users = [user["login"] for user in restrict_users]
-            restrictions_teams = [team["slug"] for team in restrict_teams]
-
-            if restrictions_users:
-                restrictions["users"] = restrictions_users
-            if restrictions_teams:
-                restrictions["teams"] = restrictions_teams
+            json.dump(bp_data, file, indent=4)
 
         # JSON schema
         repo_data = {
             "repository": repo_name,
-            "branch": default_branch,
-            "enforce_admins": enforce_admins,
-            "require_signed_commits": require_signed_commits,
-            "require_conversation_resolution": require_conversation_resolution,
-            "required_status_checks": required_status_checks,
-            "required_pull_request_reviews": required_pull_request_reviews,
-            # "restrictions": restrictions,
+            "branch": def_branch,
+            "enforce_admins": repobp.enforce_admins,
+            "require_signed_commits": repobp.signed_commits,
+            "require_conversation_resolution": repobp.required_conversation_resolution,
+            "required_status_checks": repobp.required_status_checks,
+            "required_pull_request_reviews": repobp.required_pull_request_reviews,
         }
 
-        # add restrictions block only if it is not None
-        if restrictions:
-            repo_data["restrictions"] = restrictions
+        # add restrictions key only if it is not None
+        if repobp.restrictions:
+            repo_data["restrictions"] = repobp.restrictions
 
         # Write the repository data to a JSON file
         with open(dir_path / file_name, "w") as file:
@@ -380,17 +374,8 @@ def get_repos() -> None:
 
     dir_path = pathlib.Path("repos")
     full_data_dir_path = pathlib.Path("repos-full-data")
-
-    if not dir_path.exists():
-        dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(dir_path)}" already exists.')
-    if not full_data_dir_path.exists():
-        full_data_dir_path.mkdir(parents=True)
-        print(f'The directory "./{str(full_data_dir_path)}" was created.')
-    else:
-        print(f'The directory "./{str(full_data_dir_path)}" already exists.')
+    create_directory(dir_path)
+    create_directory(full_data_dir_path)
 
     repos = get_organization_repos()
 
