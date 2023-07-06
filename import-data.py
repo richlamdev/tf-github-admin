@@ -291,6 +291,12 @@ def create_directory(dir_path: pathlib.Path) -> None:
         print(f'The directory "./{str(dir_path)}" already exists.')
 
 
+def write_list_to_file(file_path, data_list):
+    with open(file_path, "w") as file:
+        for item in data_list:
+            file.write(str(item) + "\n")
+
+
 def get_branch_protection() -> None:
     """
     Queries all GitHub repositories belonging to a specific organization for
@@ -356,6 +362,16 @@ def get_branch_protection() -> None:
         # Write the repository data to a JSON file
         with open(dir_path / file_name, "w") as file:
             json.dump(repo_data, file, indent=4)
+
+    print(f"failed repos: {failed_repo}")
+    print(f"protected repos: {protected}")
+    print(f"not protected repos: {not_protected}")
+
+    if failed_repo:
+        write_list_to_file("bp-errors.txt", failed_repo)
+
+    if not_protected:
+        write_list_to_file("bp-not-protected.txt", not_protected)
 
     print(
         f"\nRepository terraform data is written to the directory ./{dir_path}.\n"
