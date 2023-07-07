@@ -28,9 +28,12 @@ function import_teams() {
     decoded_team=$(echo $team | base64 -d)
     team_id=$(echo $decoded_team | jq -r '.id')
     team_slug_name=$(echo $decoded_team | jq -r '.slug')
-    team_name=$(echo $decoded_team | jq -r '.name')
+    #team_name=$(echo $decoded_team | jq -r '.name')
 
-    terraform import "github_team.teams[\"${team_name}\"]" "${team_id}"
+    # use team_slug_name instead of team_name as resource name
+    # this allows for easier mass removal of state if required
+    terraform import "github_team.teams[\"${team_slug_name}\"]" "${team_id}"
+    #terraform import "github_team.teams[\"${team_name}\"]" "${team_id}"
   done
 }
 

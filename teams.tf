@@ -3,7 +3,7 @@ locals {
 }
 
 resource "github_team" "teams" {
-  for_each = { for t in local.teams : t.name => t }
+  for_each = { for t in local.teams : t.slug => t }
 
   name           = each.value.name
   description    = each.value.description == null ? "" : each.value.description
