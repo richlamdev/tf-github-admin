@@ -47,25 +47,11 @@ def github_api_request(endpoint: str) -> list:
     return all_results
 
 
-def get_team_id_and_parent_slug(team_slug: str) -> dict:
-    """Get a team's ID and its parent's slug"""
-    team_data = github_api_request(f"/orgs/{org}/teams/{team_slug}")
-    parent = team_data.get("parent")
-    return {
-        "name": team_data.get("name"),
-        "slug": team_data.get("slug"),
-        "id": team_data.get("id"),
-        "parent_name": parent.get("name") if parent else None,
-        "parent_slug": parent.get("slug") if parent else None,
-        "parent_id": parent.get("id") if parent else None,
-    }
-
-
-def get_team_by_name(team_name: str) -> dict:
-    """Get a team's detail by its name"""
+def get_team_by_name_or_slug(name_or_slug: str) -> dict:
+    """Get a team's detail by its name or slug"""
     teams = github_api_request(f"/orgs/{org}/teams")
     for team in teams:
-        if team.get("name").lower() == team_name.lower():
+        if team.get("name").lower() == name_or_slug.lower() or team.get("slug").lower() == name_or_slug.lower():
             parent = team.get("parent")
             return {
                 "name": team.get("name"),
@@ -96,18 +82,10 @@ if __name__ == "__main__":
         print('Eg: export GITHUB_OWNER="google"')
         sys.exit(1)
 
-    if len(sys.argv) > 2:
-        option = sys.argv[1]
-        parameter = sys.argv[2]
-        if option == "-s":
-            team_and_parent = get_team_id_and_parent_slug(parameter)
-            print(json.dumps(team_and_parent, indent=4))
-        elif option == "-n":
-            team = get_team_by_name(parameter)
-            print(json.dumps(team, indent=4))
-        else:
-            print(
-                "Invalid option. Please provide -s for team slug or -n for team name"
-            )
+    if len(sys.argv) > 1:
+        name_or_slug = sys.argv[1]
+        team = get_team_by_name_or_slug(name_or_slug)
+        print(json.dumps(team, indent=4))
     else:
-        print("Please provide an option and parameter.")
+        print("Please provide a team name or slug as an argument.")
+
