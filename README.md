@@ -110,7 +110,7 @@ role.  The role is either `member` or `admin`.
 
 #### [github_team](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team)
 
-`python3 import-data.py teams`
+`python3 import-data.py teams`\
 `tf-import.sh teams`
 
 This is a straight forward data scrape and Terraform importation.  The
@@ -122,7 +122,7 @@ Terraform state.  The default in the configuration is `false`.
 
 #### [github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
 
-`python3 import-data.py team-membership`
+`python3 import-data.py team-membership`\
 `tf-import.sh team-membership`
 
 This is a straight forward data scrape and Terraform importation.  The
@@ -132,7 +132,7 @@ respective role.
 
 ### [github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
 
-`python3 import-data.py repos`
+`python3 import-data.py repos`\
 `tf-import.sh repos`
 
 
@@ -153,7 +153,7 @@ can be ignored
 
 #### [github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
 
-`python3 import-data.py repo-collab`
+`python3 import-data.py repo-collab`\
 `tf-import.sh repo-collab`
 
 There are two resources to manage Github collaborators via Terraform:
@@ -195,12 +195,40 @@ owner via the API.  Consequently you may notice this as a potential change,
 however, this does not change any functionality.
 
 
-### github_branch_protection implementation
+#### [github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
 
-`python3 import-data.py branch-protection`
+`python3 import-data.py branch-protection`\
 `tf-import.sh branch-protection`
 
-[github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
+Current branch protection data is obtained for the default branch of each
+repository.  In the event branch protection is not enabled for a repository,
+the default JSON data defaults to the following minimal configuration:
+
+`enforce_admins: true`
+`required_approving_review_count: 1`
+`required_status_checks: true`
+
+The above minimal configuration will be applied to the default branch of any
+repository that does not have branch protection configured.  (If branch protection
+is configured, the configuration will not be changed)
+
+There is an additional folder `branch-protection-full-data/` created, with the
+execution of `python3 import-data.py branch-protection`  This folder contains
+the full branch protection api data of each repository.  This is for reference
+if needed.  For the most part, this folder can be ignored.
+
+Notes:
+
+1) The `apps` list for the bypass_pull_request_allowances or restrictions
+block is not implemented.
+
+2) The `contexts` for the required_status_checks block is omitted, as it is a
+deprecated value per HashiCorp documentation.
+
+3) Review the JSON data and/or `import-data.py` to ensure that the
+configuration is correct for your organization.  This resource has a number of
+options that may need to be adjusted.
+
 
 ## Deployment Diagram
 
