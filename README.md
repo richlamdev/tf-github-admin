@@ -97,15 +97,11 @@ support for Terraform importation.
 
 ## Terraform Resources
 
+### [github_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/membership)
 
-
-### github_membership implementation
-
-`python3 import-data.py members`
-
+`python3 import-data.py members`\
 `tf-import.sh members`
 
-[github_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/membership)
 
 This is a straight forward data scrape and Terraform importation.  The
 API data obtained is a list of all members of the org and their respective
