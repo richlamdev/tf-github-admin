@@ -120,23 +120,21 @@ and not necessarily an option for Github.  This may result in changes to the
 Terraform state.  The default in the configuration is `false`.
 
 
-####[github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
+#### [github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
 
 `python3 import-data.py team-membership`
 `tf-import.sh team-membership`
-
 
 This is a straight forward data scrape and Terraform importation.  The
 API data obtained is a list of all team members of each team, with their
 respective role.
 
 
-### github_repository implementation
+### [github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
 
 `python3 import-data.py repos`
 `tf-import.sh repos`
 
-[github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
 
 This is a straight forward data scrape and Terraform importation.  The
 API data obtained is a list of all repos associated with the org.
@@ -153,14 +151,14 @@ repository.  This is for reference if needed.  For the most part, this folder
 can be ignored
 
 
-### github_repository_collaborators implementation
+#### [github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
 
 `python3 import-data.py repo-collab`
 `tf-import.sh repo-collab`
 
-There are two resources to manage Github collaborators via Terraform.
+There are two resources to manage Github collaborators via Terraform:
 
-[github_repository_collaborator](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborator)
+[github_repository_collaborator](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborator) and
 [github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
 
 The difference between the two resources, github_repository_collaborator only allows
