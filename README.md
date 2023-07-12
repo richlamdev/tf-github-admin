@@ -108,12 +108,11 @@ API data obtained is a list of all members of the org and their respective
 role.  The role is either `member` or `admin`.
 
 
-### github_team implementation
+#### [github_team](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team)
 
 `python3 import-data.py teams`
 `tf-import.sh teams`
 
-[github_team](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team)
 This is a straight forward data scrape and Terraform importation.  The
 API data obtained is a list of all teams associated with the org.  Note,
 the `create_default_maintainer` parameter is a parameter specific to Terraform,
@@ -121,12 +120,11 @@ and not necessarily an option for Github.  This may result in changes to the
 Terraform state.  The default in the configuration is `false`.
 
 
-### github_team_membership implementation
+####[github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
 
 `python3 import-data.py team-membership`
 `tf-import.sh team-membership`
 
-[github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
 
 This is a straight forward data scrape and Terraform importation.  The
 API data obtained is a list of all team members of each team, with their
