@@ -89,22 +89,30 @@ branch-protection may result in some changes observed from the the terraform
 plan output.
 
 
-## Terraform Resource - github_repository_collaborators
+## Terraform Resources
+
+The following Terraform resources are used/configured to manage Github
+Organization(s):
+
+[github_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/membership)
+[github_team](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team)
+[github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
+[github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
+[github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
+[github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
+
+### github_repository_collaborators implementation
 
 There are two resources to manage Github collaborators via Terraform.
 
 [github_repository_collaborator](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborator)
-
 [github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
 
-The difference in the two resources, github_repository_collaborator only allows
+The difference between the two resources, github_repository_collaborator only allows
 for adding and removing individual collaborators (users).
 
-Meanwhile, the github_repository_collaborators resource allows for the addition
+The github_repository_collaborators resource allows for the addition
 and removal of multiple collaborators (users) and/or teams.
-
-
-### github_repository_collaborators implementation
 
 1) Check for all team collaborators associated with a repository.
 
