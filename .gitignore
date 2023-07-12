@@ -38,3 +38,5 @@ import_*
 !json_structure/sample_*
 tags
 temp/
+branch-protection-full-data/
+repos-full-data/
