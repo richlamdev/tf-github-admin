@@ -38,16 +38,15 @@ Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via shell.
 
 IE:
 
-`export GITHUB_ORG="<your organization>"`
-
+`export GITHUB_ORG="<your organization>"`\
 `export GITHUB_TOKEN="<your github api token>"`
 
 
 ## Quick Start
 
-`python3 import-data.py members`
-`tf-import.sh members`
-`terraform state list`
+`python3 import-data.py members`\
+`tf-import.sh members`\
+`terraform state list`\
 `terraform plan`
 
 
@@ -130,7 +129,7 @@ API data obtained is a list of all team members of each team, with their
 respective role.
 
 
-### [github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
+#### [github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
 
 `python3 import-data.py repos`\
 `tf-import.sh repos`
@@ -204,8 +203,8 @@ Current branch protection data is obtained for the default branch of each
 repository.  In the event branch protection is not enabled for a repository,
 the default JSON data defaults to the following minimal configuration:
 
-`enforce_admins: true`
-`required_approving_review_count: 1`
+`enforce_admins: true`\
+`required_approving_review_count: 1`\
 `required_status_checks: true`
 
 The above minimal configuration will be applied to the default branch of any
