@@ -233,7 +233,8 @@ options that may need to be adjusted.
 ## Manage Configuration Changes Post Terraform State Import
 
 
-After each edit, execute `terraform plan` and `terraform apply`
+After each edit(s)in the below steps, execute `terraform plan` and
+`terraform apply`
 
 
 #### Add / remove member to to the organization
@@ -269,9 +270,8 @@ is obatained/passed directly from Terraform State.
 #### Add / remove a repository to the organization
 
 Copy one of the repository files in the `repos/` folder as the name of the
-repository as the target new repository.  Edit this file accordingly.
-Naturally, change the "name" field to the name of the repository, and
-optionally edit any other fields as needed.
+target repository.  Naturally, change the "name" field to the name of the
+repository, and optionally edit any other fields as needed.
 
 
 #### Add / remove a repository collaborator to the organization
@@ -279,9 +279,14 @@ optionally edit any other fields as needed.
 Edit the repo-collaborators.json file.  Add or remove individual
 collaborator(s) and/or team(s) to repository entries as needed.  It is
 recommended to add/remove teams only to simplify administration.
+Of course, that requires collaborators to be added to teams as needed.
 
 
 #### Add / remove a branch protection to repositories
+
+Copy one of the repository files in the `branch-protection/` folder as the name
+of the target repository.  Edit the "repository" and "branch" fields, as well
+as other fields as needed.
 
 
 ## Deployment Diagram
