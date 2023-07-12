@@ -101,7 +101,7 @@ support for Terraform importation.
 
 ### github_membership implementation
 
-`python3 import-data.py members`
+`python3 import-data.py members`\n
 `tf-import.sh members`
 
 [github_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/membership)
