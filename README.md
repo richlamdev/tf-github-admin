@@ -1,5 +1,4 @@
-# tf-github-admin
-Managing Github Organization with Terraform
+# Managing Github Organization with Terraform
 
 
 ## Introduction
@@ -18,7 +17,7 @@ resources is not feasible.
 
 Terraform is configured to use JSON decode function to dynamically create
 resources.  The JSON data becomes the source of truth as opposed to Terraform
-resource entries.  (which can be many, many resources depending on the scale of
+resource entries.  (which can be many resources depending on the scale of
 the platform)  Refer to the Deploy Diagram section.
 
 
@@ -31,7 +30,9 @@ this is why you've come to this repo!)
 
 3) Python 3
 
-4) JQ
+4) [jq](https://stedolan.github.io/jq/)
+
+5) [terraform](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform)
 
 
 Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via shell.
@@ -48,7 +49,7 @@ IE:
 `tf-import.sh members`\
 `terraform state list`\
 `terraform plan`
-
+(alternatively, target plan, with: `terraform plan --target=github_membership.member`)
 
 ## import-data.py
 
@@ -227,6 +228,11 @@ deprecated value per HashiCorp documentation.
 3) Review the JSON data and/or `import-data.py` to ensure that the
 configuration is correct for your organization.  This resource has a number of
 options that may need to be adjusted.
+
+
+## Manage Configuration Changes Post Terraform State Import
+
+
 
 
 ## Deployment Diagram
