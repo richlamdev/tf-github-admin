@@ -233,6 +233,55 @@ options that may need to be adjusted.
 ## Manage Configuration Changes Post Terraform State Import
 
 
+After each edit, execute `terraform plan` and `terraform apply`
+
+
+#### Add / remove member to to the organization
+
+Edit the members.json file
+
+
+#### Add / remove team to the organization
+
+Edit the teams.json file
+
+When adding/creating a team via editing teams.json, the `id` value is not
+required in the teams.json, populate the `id` value as `null` temporarily.
+The same applies for `parent_team_id` and `slug` values.
+
+The `id` value is required when amending team membership.
+
+
+#### Add / remove team-membership to the organization
+
+Edit the team-membership.json file.  As mentioned above, the `id` value is
+required for team-membership.  At present, the `id` value can only be obtained
+via the API.
+
+Use the script/command `python3 ./scripts/get-team-id.py "team name"` to obtain
+the `id` value.  The parameter accepts either a team or slug name.  The value
+is returned via STDOUT.  Enter this value into the team-membership.json file.
+
+This is not an ideal workflow, however, it is an interim solution until a value
+is obatained/passed directly from Terraform State.
+
+
+#### Add / remove a repository to the organization
+
+Copy one of the repository files in the `repos/` folder as the name of the
+repository as the target new repository.  Edit this file accordingly.
+Naturally, change the "name" field to the name of the repository, and
+optionally edit any other fields as needed.
+
+
+#### Add / remove a repository collaborator to the organization
+
+Edit the repo-collaborators.json file.  Add or remove individual
+collaborator(s) and/or team(s) to repository entries as needed.  It is
+recommended to add/remove teams only to simplify administration.
+
+
+#### Add / remove a branch protection to repositories
 
 
 ## Deployment Diagram
