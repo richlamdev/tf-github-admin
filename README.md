@@ -324,3 +324,8 @@ as other fields as needed.
                                  │                                 │
                                  │                                 │
                                  └─────────────────────────────────┘
+
+## ToDo
+
+-add information for `scripts/` folder
+-document decisions made / implementation
