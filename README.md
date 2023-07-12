@@ -98,9 +98,6 @@ support for Terraform importation.
 ## Terraform Resources
 
 
-[github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
-[github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
-
 
 ### github_membership implementation
 
@@ -149,14 +146,16 @@ respective role.
 This is a straight forward data scrape and Terraform importation.  The
 API data obtained is a list of all repos associated with the org.
 
-Note the JSON data used for the importation for all the repositories are
+The JSON data used for the importation for all the repositories are
 stored as individual files in the `repos/` folder at the root of the repo.
+Storing as separate files due was chosen due to potential long length
+of a single file of all repos.  This allows for easier management, when
+amending changes to a repo.
 
 There is an additional folder `repos-full-data` created, with the execution of
 `python3 import-data.py repos`  This folder contains the full api data of each
 repository.  This is for reference if needed.  For the most part, this folder
 can be ignored
-
 
 
 ### github_repository_collaborators implementation
@@ -192,6 +191,23 @@ repository collaborators with the greater set of permissions.
 on the same repo, however is a individual repository collaborator, then add
 the member to the repository collaborators with the permissions assigned.
 
+
+Note, after executing `terraform plan` or
+`terraform plan --target=github_repository_collaborators.collaborators`
+it is likely the output will have several, it not many changes/updates in-place.
+This is due to any Github owners (admins) of the organization will be added as
+an admin collaborator to all repositories.  At present, there
+is no method to distinguish between an admin repo collaborator and an admin
+owner via the API.  Consequently you may notice this as a potential change,
+however, this does not change any functionality.
+
+
+### github_branch_protection implementation
+
+`python3 import-data.py branch-protection`
+`tf-import.sh branch-protection`
+
+[github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
 
 ## Deployment Diagram
 
