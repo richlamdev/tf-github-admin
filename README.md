@@ -56,13 +56,15 @@ IE:
 This script is located at the root of the repo folder.
 
 import-data.py obtains data from a Github organization via REST API calls
-to prepare for mass Terraform importation of present state deployed state.
+to prepare for mass Terraform importation of present state.
 
 Execute `python3 import-data.py` to view options for data to scrape.
 IE: members, teams, team-membership, repos, repo-collaborators, branch-protection
 
-Data output is exported to JSON and is located at the root folder.  This data
-is used by tf-import.sh for mass Terraform import.  See following section.
+Data output is exported to JSON and is located at the root folder.  The API
+data is adjusted for the Terraform resource required/deployed.  The
+tf-import.sh script handles the mass Terraform state import.
+Refer following section for more information for Terraform importation.
 
 
 ## tf-import.sh
@@ -86,7 +88,11 @@ importation.
 Theoretically, zero (0) changes should be applied against the Github
 Organization in which the data imported from.  Importing repo-collaborators and
 branch-protection may result in some changes observed from the the terraform
-plan output.
+plan output. (see below for more information regarding potential changes)
+
+Note, with the release of [Terraform v1.5](https://www.hashicorp.com/blog/terraform-1-5-brings-config-driven-import-and-checks),
+this method is likely no longer required.  Terraform v1.5 has improved
+support for Terraform importation.
 
 
 ## Terraform Resources
@@ -100,6 +106,7 @@ Organization(s):
 [github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
 [github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
 [github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
+
 
 ### github_repository_collaborators implementation
 
