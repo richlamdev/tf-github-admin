@@ -98,12 +98,14 @@ support for Terraform importation.
 ## Terraform Resources
 
 
-[github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
 [github_repository_collaborators](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_collaborators)
 [github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
 
 
 ### github_membership implementation
+
+`python3 import-data.py members`
+`tf-import.sh members`
 
 [github_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/membership)
 
@@ -113,6 +115,9 @@ role.  The role is either `member` or `admin`.
 
 
 ### github_team implementation
+
+`python3 import-data.py teams`
+`tf-import.sh teams`
 
 [github_team](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team)
 This is a straight forward data scrape and Terraform importation.  The
@@ -124,14 +129,40 @@ Terraform state.  The default in the configuration is `false`.
 
 ### github_team_membership implementation
 
+`python3 import-data.py team-membership`
+`tf-import.sh team-membership`
+
 [github_team_membership](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/team_membership)
 
 This is a straight forward data scrape and Terraform importation.  The
-API data obtained is a list of all team members of each team.
+API data obtained is a list of all team members of each team, with their
+respective role.
+
+
+### github_repository implementation
+
+`python3 import-data.py repos`
+`tf-import.sh repos`
+
+[github_repository](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository)
+
+This is a straight forward data scrape and Terraform importation.  The
+API data obtained is a list of all repos associated with the org.
+
+Note the JSON data used for the importation for all the repositories are
+stored as individual files in the `repos/` folder at the root of the repo.
+
+There is an additional folder `repos-full-data` created, with the execution of
+`python3 import-data.py repos`  This folder contains the full api data of each
+repository.  This is for reference if needed.  For the most part, this folder
+can be ignored
 
 
 
 ### github_repository_collaborators implementation
+
+`python3 import-data.py repo-collab`
+`tf-import.sh repo-collab`
 
 There are two resources to manage Github collaborators via Terraform.
 
@@ -142,7 +173,11 @@ The difference between the two resources, github_repository_collaborator only al
 for adding and removing individual collaborators (users).
 
 The github_repository_collaborators resource allows for the addition
-and removal of multiple collaborators (users) and/or teams.
+and removal of multiple collaborators (users) and/or teams.  As a result the
+github_repository_collaborators resource was chosen to minimize the number
+of state resource entries created for each repository.
+
+The logic/workflow for creating the JSON data for this resource is as follows:
 
 1) Check for all team collaborators associated with a repository.
 
