@@ -596,7 +596,6 @@ def get_repo_collaborators() -> None:
 
             # If the collaborator is not part of any team,
             # add them to the JSON output only if they are not an organization owner
-            # or if they are an owner and also a collaborator
             if not is_in_team and collaborator.get("name") not in org_owners:
                 repo_entry["users"].append(
                     {
@@ -604,6 +603,14 @@ def get_repo_collaborators() -> None:
                         "permission": highest_permission,
                     }
                 )
+
+    # Ensure no organization admin remains in the repo_entry["users"] list
+    for repo_name, info in all_collaborators_and_teams.items():
+        info["users"] = [
+            user
+            for user in info["users"]
+            if user["username"] not in org_owners
+        ]
 
     COLLABORATORS_JSON = "repo-collaborators.json"
     with open(COLLABORATORS_JSON, "w") as f:
