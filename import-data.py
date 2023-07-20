@@ -580,7 +580,6 @@ def get_repo_collaborators() -> None:
             highest_permission = get_highest_permission(permissions)
 
             # Check if the collaborator is part of a team
-            # and if their permissions differ
             is_in_team = False
             for team, info in team_info.items():
                 if collaborator.get("name") in info["members"]:
