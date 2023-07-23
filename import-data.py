@@ -546,7 +546,7 @@ def get_repo_collaborators() -> None:
 
     # Get all the organization owners
     org_owners = get_organization_owners()
-    print(org_owners)
+    print(f"Organization owners: {org_owners}")
 
     all_collaborators_and_teams = {}
     for repo in repos:
@@ -558,16 +558,19 @@ def get_repo_collaborators() -> None:
             repo_name, {"users": [], "teams": []}
         )
 
+        # Create a dictionary to store team members and their permissions
+        team_members_permissions = {}
+
         # Create a dictionary to store team permissions and members
-        team_info = {}
         for team in teams:
             permissions = team.get("permissions", {})
             highest_permission = get_highest_permission(permissions)
             members = get_team_members(team.get("name"))
-            team_info[team.get("name")] = {
-                "permission": highest_permission,
-                "members": members,
-            }
+
+            # Add the members and their permissions to the dictionary
+            for member in members:
+                team_members_permissions[member] = highest_permission
+
             repo_entry["teams"].append(
                 {
                     "team_id": team.get("name"),
@@ -575,41 +578,33 @@ def get_repo_collaborators() -> None:
                 }
             )
 
+        print(f"Team members for {repo_name}: {team_members_permissions}")
+
         for collaborator in collaborators:
             permissions = collaborator.get("permissions", {})
             highest_permission = get_highest_permission(permissions)
+            collaborator_name = collaborator.get("name")
 
-            # Check if the collaborator is part of a team
-            is_in_team = False
-            for team, info in team_info.items():
-                if collaborator.get("name") in info["members"]:
-                    is_in_team = True
-                    if highest_permission != info["permission"]:
-                        repo_entry["users"].append(
-                            {
-                                "username": collaborator.get("name"),
-                                "permission": highest_permission,
-                            }
-                        )
-                    break
+            if collaborator_name not in org_owners:
+                user = {
+                    "username": collaborator_name,
+                    "permission": highest_permission,
+                }
 
-            # If the collaborator is not part of any team,
-            # add them to the JSON output only if they are not an organization owner
-            if not is_in_team and collaborator.get("name") not in org_owners:
-                repo_entry["users"].append(
-                    {
-                        "username": collaborator.get("name"),
-                        "permission": highest_permission,
-                    }
+                if collaborator_name in team_members_permissions:
+                    # Check if collaborator's permissions differ from team permissions
+                    if (
+                        highest_permission
+                        != team_members_permissions[collaborator_name]
+                    ):
+                        repo_entry["users"].append(user)
+                else:
+                    # User is an individual collaborator, not a team member or org owner
+                    repo_entry["users"].append(user)
+            else:
+                print(
+                    f"Skipping {collaborator_name} as they are an org owner."
                 )
-
-    # Ensure no organization admin remains in the repo_entry["users"] list
-    for repo_name, info in all_collaborators_and_teams.items():
-        info["users"] = [
-            user
-            for user in info["users"]
-            if user["username"] not in org_owners
-        ]
 
     COLLABORATORS_JSON = "repo-collaborators.json"
     with open(COLLABORATORS_JSON, "w") as f:
