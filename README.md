@@ -171,28 +171,33 @@ of state resource entries created for each repository.
 
 The logic/workflow for creating the JSON data for this resource is as follows:
 
-1) Check for all team collaborators associated with a repository.
+1) Obtain all Github organization owners.
 
-2) Check for all member collaborators associated with a repository.
+2) Obtain all member collaborators associated with a repository.
 
-3) If a member collaborator is also a member of a team that is collaborator
+3) Obtain all team collaborators associated with a repository.
+
+4) Do not add Github organization owners to the repository collaborators list.
+(this is already default, but does not appear on the via Github UI).
+
+5) If a member collaborator is also a member of a team that is collaborator
 on the same repo, then compare the permissions of the member vs. the
 permissions inherited by the member via the team.  Add this member to the
-repository collaborators with the greater set of permissions.
+repository collaborators if the permissions differ.
 
-4) If a member collaborator is not a member of a team that is collaborator
+6) If a member collaborator is not a member of a team that is collaborator
 on the same repo, however is a individual repository collaborator, then add
-the member to the repository collaborators with the permissions assigned.
-
+the member to the repository collaborators list with the permissions assigned.
 
 Note, after executing `terraform plan` or
 `terraform plan --target=github_repository_collaborators.collaborators`
-it is likely the output will have several, it not many changes/updates in-place.
-This is due to any Github owners (admins) of the organization will be added as
-an admin collaborator to all repositories.  At present, there
-is no method to distinguish between an admin repo collaborator and an admin
-owner via the API.  Consequently you may notice this as a potential change,
-however, this does not change any functionality.
+it is likely the output will have several changes/in-place updates.
+This is due to a slight error in the process above described.  Due to slight
+discrepancies in the users list you may notice minor potential changes
+Github UI.  In most cases there may be added users; added users that are
+already collaborators via team membership.  However, in some cases there
+may be removed users; removed users that are not collaborators via team
+membership.  This is a known bug, that needs to be corrected.
 
 
 #### [github_branch_protection_v3](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection_v3)
