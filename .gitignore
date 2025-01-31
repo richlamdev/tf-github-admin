@@ -30,6 +30,7 @@ override.tf.json
 
 *.swp
 *.txt
+!requirements.txt
 *.csv
 *.log
 *.json
