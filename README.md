@@ -34,6 +34,8 @@ this is why you've come to this repo!)
 
 5) [terraform](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform)
 
+6) urllib3 is installed within venv via `setup-env.sh`; see below Quick Start
+
 
 Set the environment variables $GITHUB_TOKEN and $GITHUB_OWNER via shell.
 
@@ -45,6 +47,7 @@ IE:
 
 ## Quick Start
 
+`source setup-env.sh`\
 `python3 import-data.py members`\
 `tf-import.sh members`\
 `terraform state list`\

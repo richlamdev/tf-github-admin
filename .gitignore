@@ -30,6 +30,7 @@ override.tf.json
 
 *.swp
 *.txt
+!requirements.txt
 *.csv
 *.log
 *.json
@@ -40,3 +41,4 @@ tags
 temp/
 branch-protection-full-data/
 repos-full-data/
+.venv/
