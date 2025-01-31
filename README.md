@@ -45,6 +45,7 @@ IE:
 
 ## Quick Start
 
+`source setup-env.sh`\
 `python3 import-data.py members`\
 `tf-import.sh members`\
 `terraform state list`\

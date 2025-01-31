@@ -40,3 +40,4 @@ tags
 temp/
 branch-protection-full-data/
 repos-full-data/
+.venv/
